@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<assembly xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.3"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.3 https://maven.apache.org/xsd/assembly-1.1.3.xsd">
+    <id>dist</id>
+    <formats><format>zip</format></formats>
+    <includeBaseDirectory>true</includeBaseDirectory>
+    <baseDirectory>mini-coder</baseDirectory>
+    <files>
+        <file>
+            <source>${project.build.directory}/${project.build.finalName}-all.jar</source>
+            <outputDirectory>/</outputDirectory>
+            <destName>mini-coder.jar</destName>
+        </file>
+        <file><source>README.md</source><outputDirectory>/</outputDirectory></file>
+        <file><source>ARCHITECTURE.md</source><outputDirectory>/</outputDirectory></file>
+        <file><source>CHANGELOG.md</source><outputDirectory>/</outputDirectory></file>
+        <file><source>mvnw.cmd</source><outputDirectory>/</outputDirectory></file>
+        <file><source>mvnw</source><outputDirectory>/</outputDirectory><fileMode>0755</fileMode></file>
+        <file><source>.mvn/wrapper/maven-wrapper.properties</source><outputDirectory>/.mvn/wrapper</outputDirectory></file>
+    </files>
+</assembly>
