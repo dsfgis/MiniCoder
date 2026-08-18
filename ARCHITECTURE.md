@@ -41,4 +41,4 @@ CompletionGate -> immutable RunOutcome -> console/JSON RunReport
 - 离线 E2E：真实六工具 + Scripted Provider + 临时 Git 仓库，覆盖成功修复、越界、补丁冲突、审批拒绝和预算耗尽。
 - 真实 smoke：显式 profile 与凭据门控，默认跳过且不属于离线发布阻塞项。
 
-安全设计和限制以 `README.md` 与 `project_rule.md` 为准；详细需求、设计、任务和验收以 `specs/mini-codex-v0.1/` 为事实源。
+安全设计和限制以 `README.md` 与 `project_rule.md` 为准；详细需求、设计、任务和验收以 `specs/mini-coder-v0.1/` 为事实源。

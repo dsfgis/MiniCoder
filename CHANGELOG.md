@@ -2,7 +2,7 @@
 
 ## 0.1.0 - 2026-08-17
 
-- 将产品品牌统一为 `Mini Coder`，CLI usage name 与发布制品统一为 `mini-coder`；内部 `dev.minicodex` package 和既有规格目录保持不变。
+- 将产品品牌、CLI usage name 与发布制品统一为 `Mini Coder` / `mini-coder`，并将 Java namespace、Maven `groupId`、入口类和规格目录统一迁移到 `dev.minicoder` 与 `specs/mini-coder-v0.1/`。
 - 建立 Java 21 / Maven 单模块项目与可执行 fat JAR。
 - 实现 Provider-neutral Agent Loop、Scripted test Provider 和 OpenAI Responses API adapter。
 - 实现六个 V0.1 工具、工作区路径边界、事务式 patch、命令策略/审批、进程限制和只读 Git 归属。

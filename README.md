@@ -113,4 +113,4 @@ $env:OPENAI_MODEL='gpt-5'
 
 V0.1 不支持 DeepSeek、多 Agent、RAG、MCP、长期记忆、GUI、云执行、自动 Git 写操作或强沙箱声明。范围或公共 CLI/报告合同变化时，必须先修改四份规格并重新确认。
 
-开发与架构细节见 [ARCHITECTURE.md](ARCHITECTURE.md)，规格事实源位于 `specs/mini-codex-v0.1/`。
+开发与架构细节见 [ARCHITECTURE.md](ARCHITECTURE.md)，规格事实源位于 `specs/mini-coder-v0.1/`。

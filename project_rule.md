@@ -2,20 +2,20 @@
 
 ## 1. Purpose
 
-This document consolidates implementation rules derived from the current project specifications. It is an operational guide, not an independent source of requirements. The current four-document set was explicitly approved by the user on 2026-08-17.
+This document consolidates implementation rules derived from the current project specifications. It is an operational guide, not an independent source of requirements. The current four-document set, including `REQ-018` and `REQ-019`, was explicitly approved by the user on 2026-08-18.
 
 Canonical specification documents:
 
-- `specs/mini-codex-v0.1/requirements.md`
-- `specs/mini-codex-v0.1/design.md`
-- `specs/mini-codex-v0.1/tasks.md`
-- `specs/mini-codex-v0.1/check_list.md`
+- `specs/mini-coder-v0.1/requirements.md`
+- `specs/mini-coder-v0.1/design.md`
+- `specs/mini-coder-v0.1/tasks.md`
+- `specs/mini-coder-v0.1/check_list.md`
 
 If this document conflicts with a canonical spec, the canonical spec wins. Do not resolve material conflicts by guessing; update the specs and obtain approval.
 
 ## 2. Decision status
 
-The following defaults from the spec were accepted with the four-document approvals on 2026-08-17:
+The following defaults from the spec were accepted with the four-document approvals completed through 2026-08-18:
 
 - Java 21.
 - Maven single-module project with Maven Wrapper.
@@ -26,7 +26,7 @@ The following defaults from the spec were accepted with the four-document approv
 - Windows 11 is the primary development environment; deliberate cross-platform blockers are prohibited.
 - The target workspace must already be a Git repository.
 - V0.1 provides policy controls but not OS/container isolation.
-- The public product name is `Mini Coder`; the CLI and release artifact identifier is `mini-coder`; internal package and existing specification-directory identifiers remain unchanged.
+- The public product name is `Mini Coder`; the CLI and release artifact identifier is `mini-coder`; the Java namespace and Maven `groupId` are `dev.minicoder`; the canonical specification directory is `specs/mini-coder-v0.1/`.
 
 Any still-deferred `ASM-*`, `OQ-*`, and `DD-OPEN-*` entry must remain visible. A future implementation choice must not silently close it.
 
@@ -266,7 +266,7 @@ Do not run the smoke profile merely to make default CI pass.
 - Do not check off a `CHECK-*` item before its method has actually run and its observable result matches.
 - Evidence must name the environment, command, exit code, relevant log/report/diff/hash, and date when useful.
 - A skipped optional check must be marked `N/A` with a reason, not falsely checked as passed.
-- Before release, verify all `AC-001` through `AC-041` remain covered by tasks and checks.
+- Before release, verify all `AC-001` through `AC-052` remain covered by tasks and checks.
 
 ## 17. Change control
 

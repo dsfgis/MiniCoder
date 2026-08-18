@@ -1,12 +1,12 @@
 # Mini Coder V0.1 Verification Evidence
 
-验证日期：2026-08-17（Asia/Shanghai）  
+验证日期：2026-08-17 至 2026-08-18（Asia/Shanghai）
 环境：Windows 11 amd64；Oracle JDK 21.0.11；Maven Wrapper 3.9.14；Git 2.45.1；ripgrep 15.2.0。
 
 ## Approval and traceability
 
-- 用户先明确确认原四份规格并授权按 `TASK-001`–`TASK-016` 实施；产品改名规格更新后，又明确确认当前四份文档、接受 `REQ-017` 默认决策，并授权按 `TASK-017` 实施及将验证后的代码推送到指定 GitHub `main` 分支。
-- 最新规格 ID 只读检查结果：`requirements.md` 包含 17 REQ/45 AC，`design.md` 映射 17 REQ，`tasks.md` 包含 17 TASK 并覆盖 17 REQ/45 AC，`check_list.md` 包含 29 CHECK 并覆盖 45 AC；ID 无重复，需求到设计/任务映射无缺失。
+- 用户先明确确认原四份规格并授权按 `TASK-001`–`TASK-016` 实施；产品改名规格更新后，又明确确认 `REQ-017` 并授权 `TASK-017`；2026-08-18 再次明确确认当前四份文档、接受 `REQ-018`、`REQ-019`，授权 `TASK-018`、`TASK-019` 以及验证后提交并推送 `origin/main`。
+- 最新规格 ID 只读检查结果：`requirements.md` 包含 19 REQ/52 AC，`design.md` 映射 19 REQ，`tasks.md` 包含 19 TASK 并覆盖 19 REQ/52 AC，`check_list.md` 包含 31 CHECK 并覆盖 52 AC；ID 无重复，需求到设计/任务映射无缺失。
 - `project_rule.md`、`AGENTS.md`、README 和 CLI help 均声明：策略控制不是 OS sandbox，只能用于受信任仓库或隔离副本；DeepSeek、多 Agent、RAG、MCP、自动 Git 写入和强沙箱不在 V0.1 范围。
 
 ## Task-level commands
@@ -42,36 +42,41 @@ E2E 使用真实 test-scope Spring Boot 3.3.2 fixture；临时仓库先以 `mvn.
 
 改名前结果：23 个 Surefire suite，52 tests，0 failure，0 error，3 skipped。默认跳过的是 2 个 profile-gated E2E test 和 1 个真实 OpenAI smoke test；默认构建未调用真实 Provider。
 
-## Pre-rename artifact history
+## Pre-rename history
 
-- `target/mini-codex-0.1.0-SNAPSHOT-all.jar`
-  - SHA-256: `E27DF65F4CCCBF9925C8A790AFA2EC5AF2CB1DEFD721F17AF111250B94550A13`
-- `target/mini-codex-0.1.0-SNAPSHOT-dist.zip`
-  - SHA-256: `46F10E560219198B92693EDE1F806126FDFC819D0E54AAFAB78B8CBE6905BC91`
-- ZIP 已审计包含 `mini-codex.jar`、README、ARCHITECTURE、CHANGELOG、Maven Wrapper；fat JAR 中 `org/springframework/` 类数量为 0。
-- 在 `target\发布 验证` 工作目录运行打包 JAR `--help`：进程退出码 0，包含参数、环境变量、示例和非 OS sandbox 警告。
-- 同一目录运行 packaged `--provider scripted --non-interactive --json-report scripted-report.json`：进程退出码 10；控制台与 JSON 均为 `SUCCEEDED_WITH_WARNINGS`/10，runId 一致，不要求 `OPENAI_API_KEY`，workspace revision 为 0。
-- `git status --short` 只显示本次从空仓库创建的预期未跟踪项目文件；未执行 commit、reset、clean、checkout 或 push。
-
-以上条目是 `REQ-017` 实施前的历史证据，仅用于保留证据链，不代表当前发布制品。
+初始实现和第一次品牌迁移的原始制品名、哈希、CLI runId、状态及当时工作树记录保留在 Git commit `12ae40c` 的本证据文档中。当前文档不将这些历史制品重新标注为现行名称；它们仅通过 Git 历史追溯，不代表当前发布制品。
 
 ## TASK-017 Mini Coder rename evidence
 
 - 局部 CLI 测试：`.\mvnw.cmd -q -Dtest=CliTest test`，退出码 0；新增断言覆盖 `Usage: mini-coder`、示例命令和 `Mini Coder 0.1.0` 版本文本。
 - 改名后 `.\mvnw.cmd -q clean verify` 明确退出 0；随后两次 `.\mvnw.cmd -q -Poffline-e2e verify` 均退出 0；证据文档更新后再次执行最终 `.\mvnw.cmd -q clean verify`，仍明确退出 0。最终默认 Surefire 报告为 23 suites、53 tests、0 failure、0 error、3 skipped；启用离线 E2E 时为 1 skipped（仅真实 OpenAI smoke）。
-- 当前发布制品：
+- `TASK-017` 所在 revision 的发布制品：
   - `target/mini-coder-0.1.0-SNAPSHOT-all.jar`，SHA-256 `0D74190AD6DC6707503BEC93D9FEFCC921A96BB852858EE13F183D6856E530C6`。
   - `target/mini-coder-0.1.0-SNAPSHOT-dist.zip`，SHA-256 `8D95803A7F2DFED115D2C2C4EB2668FFB40E5C2192FC1A46FB879684A259AC20`。
 - ZIP 根目录为 `mini-coder/`，其中可执行 JAR 为 `mini-coder.jar`；干净构建后的旧名发布制品数量为 0；fat JAR 中 `org/springframework/` 类数量为 0。
 - 在 `target\发布 验证` 目录运行 `mini-coder.jar --help` 和 `--version` 均退出 0；帮助首行为 `Usage: mini-coder`，示例使用 `mini-coder`，版本输出为 `Mini Coder 0.1.0`。
 - 同一 Unicode/空格目录使用最终构建制品运行 scripted CLI，进程与 JSON 均报告 `SUCCEEDED_WITH_WARNINGS`/10，runId 为 `e03f8032-c085-419f-893d-1d5cd077c22f`，workspace revision 为 0。
-- 旧名定向扫描结果仅包含批准保留的 `dev.minicodex` package、`specs/mini-codex-v0.1/` 目录、`REQ-017` 改名说明和本节历史证据；没有旧对外品牌、CLI usage name 或当前发布制品引用。
+- `TASK-017` 所在 revision 的定向扫描允许当时尚未迁移的内部 namespace 与规格目录；其原始命中和判断保留在 Git 历史。当前迁移使用 `REQ-018`、`REQ-019` 的零例外标准重新验收。
+
+## TASK-018 and TASK-019 namespace/document migration evidence
+
+- 用户于 2026-08-18 明确确认包含 `REQ-018`、`REQ-019` 的四份当前规格，接受默认决策，并授权实施、提交和推送 `origin/main`。
+- Java 目录、全部 `package`/`import`/完全限定类名已迁移为 `dev.minicoder`；POM 坐标为 `dev.minicoder:mini-coder`，shade `mainClass` 与 fat JAR manifest `Main-Class` 均为 `dev.minicoder.cli.Main`。
+- 规格事实源仅存在于 `specs/mini-coder-v0.1/`；废弃命名的当前内容扫描和路径扫描均为 0；4/4 事实源文件存在；检查到 1 个 Markdown 相对链接，缺失目标为 0。
+- 规格一致性检查为 19 REQ、52 AC、19 TASK、31 CHECK，定义无重复；展开 ID 区间后，需求到设计、需求/验收到任务、验收到检查均无缺失。
+- Java 21 `.\mvnw.cmd -q clean verify` 退出 0：23 Surefire suites、53 tests、0 failure、0 error、3 skipped；连续两次 `.\mvnw.cmd -q -Poffline-e2e verify` 均退出 0，无真实 API key 或公网依赖。
+- ZIP 根目录为 `mini-coder/`，包含 `mini-coder.jar`、README、ARCHITECTURE、CHANGELOG 与 Maven Wrapper；fat JAR 中 `org/springframework/` class 数为 0。
+- 最终发布制品：
+  - `target/mini-coder-0.1.0-SNAPSHOT-all.jar`，SHA-256 `E205F3D7FF87E00E9DE8150B8C0479FCDBE4BD4A117AF124C95E9C09C6FE68AE`。
+  - `target/mini-coder-0.1.0-SNAPSHOT-dist.zip`，SHA-256 `D9D3401541E661C2711A24E5C01FFA5916FFDC922B5A73959F6EAE29D9EDD6BF`。
+- 在 `target\发布 验证` 中运行 fat JAR `--help`、`--version` 均退出 0；帮助首行为 `Usage: mini-coder`，版本为 `Mini Coder 0.1.0`。
+- 同一 Unicode/空格目录使用最终制品运行 scripted CLI，进程与 JSON 均为 `SUCCEEDED_WITH_WARNINGS`/10，runId `e5c4ad60-999d-4d75-96be-23c09c736c8f`，workspace revision 为 0；该警告准确反映本次只读 scripted 任务未修改工作区。
 
 ## Checklist evidence map
 
 | CHECK | Evidence |
 |---|---|
-| 001–004 | 两次四文档整体批准、默认决策接受、17 REQ/45 AC 最新规格追踪与安全边界审阅 |
+| 001–004 | 三次规格阶段批准；最新 `REQ-018`/`REQ-019` 默认决策接受；19 REQ/52 AC 追踪与安全边界审阅 |
 | 005–006 | final clean verify；packaged help/scripted CLI；CLI tests |
 | 007–009 | Workspace/PathResolver/ChangeAttribution tests |
 | 010–013 | Provider contract/OpenAI adapter/AgentRuntime/CompletionGate tests |
@@ -81,3 +86,5 @@ E2E 使用真实 test-scope Spring Boot 3.3.2 fixture；临时仓库先以 `mvn.
 | 027 | N/A：本轮未使用真实 OpenAI 凭据，未获得该可选网络 smoke 的明确执行授权 |
 | 028 | final clean verify、artifact hash/content、Unicode/space path packaged CLI、文档/范围审计 |
 | 029 | Mini Coder CLI/版本测试、新名 JAR/ZIP/包内 JAR、旧制品为 0、旧名审计与 Unicode/space path packaged CLI |
+| 030 | 规格目录 4/4、文档/路径零残留、Markdown 相对链接 1/1、Git 历史保真审阅 |
+| 031 | `dev.minicoder` 路径/声明、Maven 坐标、shade/manifest 入口、53 tests、双 E2E、packaged CLI 与制品哈希 |

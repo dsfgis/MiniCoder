@@ -7,16 +7,16 @@ These instructions apply to the entire repository.
 Before doing repository work, read the following files in order:
 
 1. `project_rule.md`
-2. `specs/mini-codex-v0.1/requirements.md`
-3. `specs/mini-codex-v0.1/design.md`
-4. `specs/mini-codex-v0.1/tasks.md`
-5. `specs/mini-codex-v0.1/check_list.md`
+2. `specs/mini-coder-v0.1/requirements.md`
+3. `specs/mini-coder-v0.1/design.md`
+4. `specs/mini-coder-v0.1/tasks.md`
+5. `specs/mini-coder-v0.1/check_list.md`
 
-The four files under `specs/mini-codex-v0.1/` are the source of truth. `project_rule.md` and this file summarize them and must not silently expand or contradict their scope.
+The four files under `specs/mini-coder-v0.1/` are the source of truth. `project_rule.md` and this file summarize them and must not silently expand or contradict their scope.
 
 ## Current phase and approval gate
 
-- The four Mini Coder V0.1 spec documents, including `REQ-017`, and their default decisions were explicitly approved by the user on 2026-08-17; the repository is in implementation/verification phase.
+- The four Mini Coder V0.1 spec documents, including `REQ-017` through `REQ-019`, and their default decisions were explicitly approved by the user on 2026-08-18; the repository is in implementation/verification phase.
 - Do not create or modify product source, tests, schemas, dependencies, generated code, build/deployment configuration, or infrastructure until the user explicitly approves the current versions of all four spec documents.
 - Creating or refining documentation is allowed before approval, but material changes to requirements, design, tasks, or verification invalidate any earlier approval.
 - If implementation reveals a material mismatch, stop, revise the affected spec documents, run the traceability review again, and obtain renewed approval.
@@ -25,7 +25,7 @@ The four files under `specs/mini-codex-v0.1/` are the source of truth. `project_
 
 1. Check the request for incorrect assumptions, missing evidence, scope expansion, and conflicts with the specs.
 2. Distinguish confirmed facts from assumptions and unresolved decisions. Never turn `ASM-*`, `OQ-*`, or `DD-OPEN-*` into settled requirements without approval.
-3. After approval, implement in `TASK-001` through `TASK-016` order unless a task explicitly permits parallel work and all dependencies are satisfied.
+3. After approval, implement in `TASK-001` through `TASK-019` order unless a task explicitly permits parallel work and all dependencies are satisfied.
 4. Keep changes small and independently verifiable. Run each task's stated verification before starting a dependent task.
 5. Update task/check status only from actual evidence. Never mark a checkbox complete because code appears correct.
 6. Preserve user changes and report blockers or newly discovered requirement changes instead of working around them silently.
