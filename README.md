@@ -1,6 +1,6 @@
 # Mini Coder V0.1
 
-Mini Coder 是一个用于学习 Coding Agent Harness 的 Java 21 命令行项目。它实现单 Agent 循环、OpenAI Responses API 适配、六个本地工具、Git 基线归属、命令策略、验证完成门和证据报告；它不是模型训练项目，也不是完整 Codex 的复刻。
+Mini Coder 是一个用于学习 Coding Agent Harness 的 Java 21 命令行项目。它实现单 Agent 循环、OpenAI/DeepSeek Responses API 适配、六个本地工具、Git 基线归属、命令策略、验证完成门和证据报告；它不是模型训练项目，也不是完整 Codex 的复刻。
 
 ## 环境要求
 
@@ -8,7 +8,7 @@ Mini Coder 是一个用于学习 Coding Agent Harness 的 Java 21 命令行项�
 - Git
 - ripgrep（`rg`）
 - Windows PowerShell；项目主要验证入口为 `mvnw.cmd`
-- 真实运行时需要 `OPENAI_API_KEY`，模型由 `--model` 或 `OPENAI_MODEL` 指定
+- 真实运行时需要所选 Provider 的专用 API key，模型由 `--model` 或对应 Provider 的模型环境变量指定
 
 检查环境：
 
@@ -41,7 +41,9 @@ $env:Path="$env:JAVA_HOME\bin;$env:Path"
 
 ## 配置与运行
 
-密钥只从环境变量读取，不接受明文命令行密钥参数：
+密钥只从所选 Provider 的环境变量读取，不接受明文命令行密钥参数，也不会在 Provider 之间回退或混用。
+
+OpenAI：
 
 ```powershell
 $env:OPENAI_API_KEY='<your-key>'
@@ -53,7 +55,27 @@ java -jar target\mini-coder-0.1.0-SNAPSHOT-all.jar `
   --json-report D:\path\to\run-report.json
 ```
 
-可用参数以 `--help` 为准。`OPENAI_BASE_URL` 可覆盖默认 API 根地址；若地址已以 `/v1` 结尾，适配器不会重复追加。
+DeepSeek：
+
+```powershell
+$env:DEEPSEEK_API_KEY='<your-key>'
+$env:DEEPSEEK_MODEL='<responses-capable-model>'
+java -jar target\mini-coder-0.1.0-SNAPSHOT-all.jar `
+  --workspace D:\path\to\trusted-repo `
+  --task "修复失败测试并验证" `
+  --provider deepseek `
+  --verify-command "mvn test" `
+  --json-report D:\path\to\run-report.json
+```
+
+配置优先级：
+
+| Provider | API key | Model | Base URL |
+|---|---|---|---|
+| OpenAI | `OPENAI_API_KEY` | `--model` > `OPENAI_MODEL` | `--base-url` > `OPENAI_BASE_URL` > `https://api.openai.com` |
+| DeepSeek | `DEEPSEEK_API_KEY` | `--model` > `DEEPSEEK_MODEL` | `--base-url` > `DEEPSEEK_BASE_URL` > `https://api.deepseek.com` |
+
+可用参数以 `--help` 为准。OpenAI Adapter 会把 API 根地址规范化为 `/v1/responses`。DeepSeek Adapter 将默认地址解析为 `https://api.deepseek.com/responses`；自定义 Base URL 保留已有路径并只追加 `/responses`，不会自动注入 `/v1`，因此不要把已经包含 `/responses` 的完整 endpoint 传给 `--base-url`。
 
 V0.1 只向模型暴露：`list_files`、`read_file`、`search_code`、`apply_patch`、`shell`、`git_diff`。多个工具调用严格按 Provider 返回顺序串行执行。
 
@@ -97,9 +119,9 @@ V0.1 的 `WorkspaceGuard`、`CommandPolicy`、审批和脱敏是应用层防护�
 - `shell` 默认使用 `ProcessBuilder(List<String>)`；只有模型显式选择 shell mode 时才解释 shell 语法，并仍需策略审批。
 - API key、Bearer token 和常见密钥形式会在异常、工具输出和报告边界脱敏，但这不替代隔离环境。
 
-## 可选真实 OpenAI Smoke Test
+## 可选真实 Provider Smoke Test
 
-该测试默认跳过。只有用户明确授权联网并设置凭据后执行：
+这些测试默认跳过。只有用户明确授权联网并设置对应凭据后执行：
 
 ```powershell
 $env:OPENAI_API_KEY='<your-key>'
@@ -107,10 +129,16 @@ $env:OPENAI_MODEL='gpt-5'
 .\mvnw.cmd -q -Popenai-smoke verify
 ```
 
-测试只进行固定的 `read_file` function-call/续接往返，工具结果来自内存 fixture，不读取或修改仓库。不要在日志或缺陷报告中粘贴密钥。
+```powershell
+$env:DEEPSEEK_API_KEY='<your-key>'
+$env:DEEPSEEK_MODEL='<responses-capable-model>'
+.\mvnw.cmd -q -Pdeepseek-smoke verify
+```
+
+测试只进行固定的 `read_file` function-call/续接往返，工具结果来自内存 fixture，不读取或修改仓库。不要在日志或缺陷报告中粘贴密钥。账户余额、模型权限或网络问题应与产品失败分开记录。
 
 ## 项目范围
 
-V0.1 不支持 DeepSeek、多 Agent、RAG、MCP、长期记忆、GUI、云执行、自动 Git 写操作或强沙箱声明。范围或公共 CLI/报告合同变化时，必须先修改四份规格并重新确认。
+V0.1 支持 OpenAI、DeepSeek 和离线 scripted Provider；不支持其他真实 Provider、多 Agent、RAG、MCP、长期记忆、GUI、云执行、自动 Git 写操作或强沙箱声明。DeepSeek 专用 thinking/reasoning effort CLI 控制仍在范围外。范围或公共 CLI/报告合同变化时，必须先修改四份规格并重新确认。
 
 开发与架构细节见 [ARCHITECTURE.md](ARCHITECTURE.md)，规格事实源位于 `specs/mini-coder-v0.1/`。

@@ -10,10 +10,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class CliTest {
+    private static final String DEEPSEEK_TEST_KEY = "sk-deepseek-test-secret-0000";
+    private static final String OPENAI_TEST_KEY = "sk-openai-test-secret-0000";
+
     @TempDir Path temp;
     @Test
     void helpDocumentsSafetyBoundaryAndExample() {
@@ -21,11 +25,15 @@ class CliTest {
         assertEquals(0, capture.exitCode());
         assertTrue(capture.out().contains("not an OS sandbox"));
         assertTrue(capture.out().contains("Usage: mini-coder"));
-        assertTrue(capture.out().contains("Example:"));
+        assertTrue(capture.out().contains("Examples:"));
         assertTrue(capture.out().contains("mini-coder --workspace"));
         assertTrue(capture.out().contains("--workspace"));
         assertTrue(capture.out().contains("--verify-command"));
         assertTrue(capture.out().contains("OPENAI_API_KEY"));
+        assertTrue(capture.out().contains("DEEPSEEK_API_KEY"));
+        assertTrue(capture.out().contains("DEEPSEEK_MODEL"));
+        assertTrue(capture.out().contains("DEEPSEEK_BASE_URL"));
+        assertTrue(capture.out().contains("--provider deepseek"));
     }
 
     @Test
@@ -44,7 +52,23 @@ class CliTest {
         Capture provider = execute("--workspace", ".", "--task", "x", "--provider", "unknown",
                 "--model", "test");
         assertEquals(20, provider.exitCode());
-        assertTrue(provider.err().contains("supports openai"));
+        assertTrue(provider.err().contains("supports openai, deepseek"));
+    }
+
+    @Test
+    void deepSeekConfigurationFailsBeforeWorkspaceOrNetworkAndDoesNotUseOpenAiKey() {
+        Capture missingKey = execute(Map.of("OPENAI_API_KEY", OPENAI_TEST_KEY),
+                "--workspace", "missing-workspace", "--task", "x", "--provider", "deepseek",
+                "--model", "deepseek-test");
+        assertEquals(20, missingKey.exitCode());
+        assertTrue(missingKey.err().contains("Missing DEEPSEEK_API_KEY"));
+        assertFalse(missingKey.err().contains(OPENAI_TEST_KEY));
+
+        Capture missingModel = execute(Map.of("DEEPSEEK_API_KEY", DEEPSEEK_TEST_KEY),
+                "--workspace", "missing-workspace", "--task", "x", "--provider", "deepseek");
+        assertEquals(20, missingModel.exitCode());
+        assertTrue(missingModel.err().contains("DEEPSEEK_MODEL"));
+        assertFalse(missingModel.err().contains(DEEPSEEK_TEST_KEY));
     }
 
     @Test
@@ -72,7 +96,11 @@ class CliTest {
     }
 
     private Capture execute(String... args) {
-        CommandLine command = Main.commandLine();
+        return execute(Map.of(), args);
+    }
+
+    private Capture execute(Map<String, String> environment, String... args) {
+        CommandLine command = Main.commandLine(environment);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ByteArrayOutputStream err = new ByteArrayOutputStream();
         command.setOut(new PrintWriter(out, true, StandardCharsets.UTF_8));

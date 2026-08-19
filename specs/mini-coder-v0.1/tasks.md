@@ -202,6 +202,28 @@
 - **预期结果**：四份事实源只存在于 `specs/mini-coder-v0.1/`；受版本控制树中的废弃命名命中数为 0；所有链接目标存在；最终全量构建与两次离线 E2E 退出 0、测试数不减少、发布制品可启动；历史事实仅由 Git 历史追溯。
 - **并行性**：否；依赖代码 namespace 完成，并作为最终发布门禁收口。
 
+### TASK-020 实现 DeepSeek 配置与 Responses API Adapter
+
+- **状态**：已完成；独立配置解析器、DeepSeek Adapter、无状态有界 cursor、错误分类和离线合同测试均已实现，规定定向测试退出 0。
+- **交付物**：CLI/配置层支持 `--provider deepseek`、`DEEPSEEK_API_KEY`、`DEEPSEEK_MODEL`、`DEEPSEEK_BASE_URL` 及规定优先级；新增 `llm/deepseek/DeepSeekResponsesProvider`，将默认 Base URL 解析为 `https://api.deepseek.com/responses`，对自定义 Base URL 只追加 `/responses` 而不自动注入 `/v1`，并实现 Bearer Auth、请求/响应映射、有界无状态回放 cursor、function call/tool result 关联、用量、错误分类、重试与脱敏；不新增第三方 Provider SDK。
+- **需求引用**：`REQ-001`、`REQ-003`、`REQ-013`、`REQ-015`、`REQ-016`、`REQ-020`；`AC-002`、`AC-007`–`AC-009`、`AC-033`、`AC-037`、`AC-039`、`AC-053`–`AC-057`。
+- **设计引用**：3.2、4、5.1、5.4、6、10–13、15.2。
+- **依赖**：`TASK-019`；包含 `REQ-020` 的四份当前规格文档重新获批。
+- **验证方法**：执行 `.\mvnw.cmd -q -Dtest='*RunConfigTest,*CliTest,*DeepSeekProviderContractTest,*RedactorTest,*LlmProviderContractTest' test`；使用本地 mock HTTP server 断言端点、Authorization header（只比较测试值，不输出）、请求体、无状态多轮回放、响应顺序、用量、cursor 上限以及 400/401/402/422/429/5xx/超时/畸形响应。
+- **预期结果**：选择 DeepSeek 时只读取 DeepSeek 专用配置；缺密钥/模型在网络和工具前失败；最终文本、单/多工具调用及多轮续接通过同一领域契约；仅允许错误有界重试；测试输出与报告扫描不到测试密钥；AgentRuntime、ToolRegistry 和 CompletionGate 无 Provider 分支修改。
+- **并行性**：否；配置、Adapter 与安全测试需作为一个可验证增量完成。
+
+### TASK-021 完成 DeepSeek CLI 文档、可选 Smoke 与回归发布门禁
+
+- **状态**：已完成；CLI/help、README、架构、规则、变更记录、验证证据和默认禁用 smoke profile 已更新，最终 clean verify、双离线 E2E、packaged CLI、ZIP、链接与秘密扫描均通过；2026-08-19 获得单独授权后，真实 DeepSeek smoke 也已通过。
+- **交付物**：更新 CLI help、README、ARCHITECTURE、CHANGELOG、`project_rule.md`、`AGENTS.md` 和验证证据；新增默认禁用的 `deepseek-smoke` Maven profile/test，要求显式 `DEEPSEEK_API_KEY`、模型和用户网络授权；完成发布包与回滚说明。
+- **需求引用**：`REQ-001`、`REQ-012`–`REQ-016`、`REQ-020`；`AC-003`、`AC-031`–`AC-039`、`AC-053`–`AC-058`。
+- **设计引用**：5.4、8.3、10–14。
+- **依赖**：`TASK-020` 局部测试通过。
+- **验证方法**：运行 `.\mvnw.cmd -q clean verify`、连续两次 `.\mvnw.cmd -q -Poffline-e2e verify`、打包 JAR `--help` 和 scripted CLI；扫描真实/测试密钥、Provider 名称、环境变量和文档链接；在用户另行明确授权且凭据/模型/网络可用时运行 `.\mvnw.cmd -q -Pdeepseek-smoke verify`，否则记录 N/A，不把可选 smoke 当作离线发布失败。
+- **预期结果**：默认构建、双 E2E 和 packaged CLI 退出符合预期且测试数不少于实施前 53；不需要真实密钥或公网；help/README 准确列出三个 Provider 和隔离的配置优先级；可选 smoke 不泄密并能完成至少一次 DeepSeek Responses function call 续接，或以外部环境阻塞准确记录。
+- **并行性**：否；依赖 Adapter 完成并作为发布收口。
+
 ## 3. 推荐增量里程碑
 
 | 里程碑 | 包含任务 | 可演示结果 |
@@ -213,6 +235,7 @@
 | M5 产品改名 | `TASK-017` | `Mini Coder` 品牌、`mini-coder` CLI 与新名发布制品 |
 | M6 代码命名迁移 | `TASK-018` | Java namespace、Maven 坐标与入口类统一为 `dev.minicoder` |
 | M7 文档与发布收口 | `TASK-019` | 全部文档统一命名、规格目录/链接迁移、最终离线门禁通过 |
+| M8 DeepSeek Provider | `TASK-020`–`TASK-021` | DeepSeek 密钥/模型配置、Responses API 工具调用、离线合约和可选真实 smoke |
 
 ## 4. 需求与验收标准覆盖检查
 
@@ -237,5 +260,6 @@
 | `REQ-017` | `AC-042`–`AC-045` | `TASK-017`–`TASK-019` |
 | `REQ-018` | `AC-046`–`AC-048` | `TASK-019` |
 | `REQ-019` | `AC-049`–`AC-052` | `TASK-018`、`TASK-019` |
+| `REQ-020` | `AC-053`–`AC-058` | `TASK-020`、`TASK-021` |
 
-覆盖结论：当前 19 个需求和 52 个验收标准均至少映射到一个实施任务；没有任务引入 V0.1 范围外的多 Agent、RAG、MCP、长期记忆、Git 写入或强沙箱承诺。
+覆盖结论：当前 20 个需求和 58 个验收标准均至少映射到一个实施任务；DeepSeek 只扩展 Provider/配置/测试/文档边界，没有任务引入 V0.1 范围外的多 Agent、RAG、MCP、长期记忆、Git 写入、其他真实 Provider 或强沙箱承诺。

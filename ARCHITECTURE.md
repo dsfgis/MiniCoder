@@ -9,7 +9,7 @@ CLI / RunConfig
 Workspace.open -> GitBaseline + WorkspaceGuard
       |
       v
-AgentRuntime <-> LlmProvider (OpenAI or scripted test double)
+AgentRuntime <-> LlmProvider (OpenAI, DeepSeek, or scripted test double)
       |
       v
 ToolRegistry -> six Provider-neutral tools
@@ -22,7 +22,9 @@ ToolRegistry -> six Provider-neutral tools
 CompletionGate -> immutable RunOutcome -> console/JSON RunReport
 ```
 
-`AgentRuntime` 只依赖 Provider-neutral 请求、响应、工具调用和结果。OpenAI JSON 与 HTTP 类型封装在 `llm/openai`；核心包不会根据具体工具名实现工具行为分支，工具发现和校验统一经过 `ToolRegistry`。
+`AgentRuntime` 只依赖 Provider-neutral 请求、响应、工具调用和结果。OpenAI JSON/HTTP 类型封装在 `llm/openai`，DeepSeek JSON/HTTP 与无状态回放封装在 `llm/deepseek`；核心包不会根据 Provider 或具体工具名实现行为分支，工具发现和校验统一经过 `ToolRegistry`。
+
+OpenAI Adapter 使用服务端 `previous_response_id` 续接。DeepSeek Responses API 不依赖服务端续接标识，Adapter 将必要的 `message`、`reasoning`、`function_call` 和 `function_call_output` 保存在 Provider 私有 cursor 中并有界回放；cursor 最多 30 轮、512 items、1 MiB，不进入日志或报告。两个真实 Provider 的密钥与配置完全隔离。
 
 ## 不变量
 
@@ -39,6 +41,6 @@ CompletionGate -> immutable RunOutcome -> console/JSON RunReport
 
 - 单元/合同：配置、Provider-neutral 合同、工具 Schema、路径、补丁、策略、进程、Git、Provider wire、Runtime、CompletionGate、报告与 CLI。
 - 离线 E2E：真实六工具 + Scripted Provider + 临时 Git 仓库，覆盖成功修复、越界、补丁冲突、审批拒绝和预算耗尽。
-- 真实 smoke：显式 profile 与凭据门控，默认跳过且不属于离线发布阻塞项。
+- 真实 smoke：OpenAI/DeepSeek 使用各自显式 profile 与凭据门控，默认跳过且不属于离线发布阻塞项。
 
 安全设计和限制以 `README.md` 与 `project_rule.md` 为准；详细需求、设计、任务和验收以 `specs/mini-coder-v0.1/` 为事实源。

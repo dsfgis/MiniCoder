@@ -4,7 +4,7 @@
 
 本文仅基于 `requirements.md` 当前版本设计。其核心判断是：V0.1 要优先验证 Harness，而不是堆叠多 Agent、RAG 或平台功能；但只要允许执行 Shell 和修改文件，工作区边界、策略、审批和验证就必须与 Agent Loop 同期存在，而不能完全后置。
 
-OpenAI Provider 采用 Responses API，是因为官方文档当前将其作为推理、工具调用和多轮工作流的推荐接口。具体模型仍由运行时配置，避免把易变化的模型别名固化为领域设计。
+OpenAI Provider 采用 Responses API，是因为官方文档当前将其作为推理、工具调用和多轮工作流的推荐接口。DeepSeek 官方 API 现已原生支持 Responses API，但它是无状态接口且不支持 `previous_response_id`，因此使用同一领域契约、独立 Adapter 和私有有界回放 cursor。两个 Provider 的具体模型都由运行时配置，避免把易变化的模型别名固化为领域设计。（`REQ-003`、`REQ-016`、`REQ-020`）
 
 ## 2. 设计目标与非目标
 
@@ -15,6 +15,7 @@ OpenAI Provider 采用 Responses API，是因为官方文档当前将其作为�
 - `DG-003`：成功状态由可验证证据决定，而不是由模型自报决定。（`REQ-009`、`REQ-011`、`REQ-012`）
 - `DG-004`：所有副作用都经过统一边界和策略入口。（`REQ-002`、`REQ-007`、`REQ-008`、`REQ-010`、`REQ-013`）
 - `DG-005`：核心行为可用 Fake Provider 与临时 Git 仓库离线复现。（`REQ-014`、`REQ-015`）
+- `DG-006`：DeepSeek 密钥、线协议和无状态续接封装在 Adapter/Config 边界内，不改变 AgentRuntime、ToolRegistry 或 CompletionGate。（`REQ-016`、`REQ-020`）
 
 ### 2.2 非目标
 
@@ -27,7 +28,7 @@ OpenAI Provider 采用 Responses API，是因为官方文档当前将其作为�
 
 ### 3.1 上下文
 
-输入端是本地终端用户；外部依赖包括目标 Git 工作区、Java/Git/ripgrep/目标构建工具，以及可选的 OpenAI API。输出端是终端、JSON 报告、结构化日志和工作区内由补丁造成的变更。
+输入端是本地终端用户；外部依赖包括目标 Git 工作区、Java/Git/ripgrep/目标构建工具，以及可选的 OpenAI API 或 DeepSeek API。输出端是终端、JSON 报告、结构化日志和工作区内由补丁造成的变更。
 
 ```mermaid
 flowchart LR
@@ -35,6 +36,7 @@ flowchart LR
     CLI --> A["AgentRuntime"]
     A <--> P["LlmProvider"]
     P <--> OA["OpenAI Responses API"]
+    P <--> DS["DeepSeek Responses API"]
     A --> TR["ToolRegistry"]
     TR --> FT["文件/搜索/补丁工具"]
     TR --> ST["Shell 工具"]
@@ -55,7 +57,7 @@ src/main/java/<base-package>/
 ├── cli/           MainCommand, CliOptions
 ├── config/        RunConfig, ConfigLoader, SecretValue
 ├── agent/         AgentRuntime, RunStateMachine, CompletionGate
-├── llm/           LlmProvider, ProviderRequest/Response, openai/*
+├── llm/           LlmProvider, ProviderRequest/Response, openai/*, deepseek/*
 ├── tool/          Tool, ToolDefinition, ToolRegistry, ToolResult
 │   ├── file/      ListFilesTool, ReadFileTool, SearchCodeTool
 │   ├── patch/     ApplyPatchTool
@@ -73,10 +75,10 @@ src/main/java/<base-package>/
 
 | 模块 | 主要职责 | 明确不负责 | 需求 |
 |---|---|---|---|
-| CLI/Config | 参数解析、配置优先级、依赖预检、退出码 | Agent 决策 | `REQ-001`、`REQ-012` |
+| CLI/Config | 参数解析、Provider 专用配置优先级、依赖预检、退出码 | Agent 决策、跨 Provider 密钥回退 | `REQ-001`、`REQ-012`、`REQ-020` |
 | Workspace | 根目录规范化、Git 基线、路径边界 | 命令语义分类 | `REQ-002`、`REQ-009` |
 | AgentRuntime | 循环编排、预算、状态转换、结果回传 | Provider 线协议、工具实现 | `REQ-003`、`REQ-004`、`REQ-011` |
-| LlmProvider | 领域请求/响应与供应商 API 互换 | 工具执行、完成判定 | `REQ-003`、`REQ-016` |
+| LlmProvider | 领域请求/响应与供应商 API 互换；封装有状态/无状态续接差异 | 工具执行、完成判定 | `REQ-003`、`REQ-016`、`REQ-020` |
 | ToolRegistry | 工具发现、Schema 校验、执行分派 | 权限绕过、循环策略 | `REQ-005` |
 | File/Patch Tools | 受控读取、搜索和原子补丁 | 工作区外访问、任意覆写 | `REQ-006`、`REQ-007` |
 | Shell/ProcessRunner | 进程启动、捕获、超时、清理 | 自行决定审批 | `REQ-008` |
@@ -88,9 +90,9 @@ src/main/java/<base-package>/
 
 ### 5.1 启动阶段
 
-1. CLI 解析参数，按“命令行非秘密配置 > 配置文件 > 环境变量 > 默认值”的优先级构建 `RunConfig`。（`REQ-001`）
+1. CLI 解析参数，按“命令行非秘密配置 > Provider 专用环境变量 > 默认值”的优先级构建 `RunConfig`；密钥只从所选 Provider 的专用环境变量读取，禁止跨 Provider 回退。（`REQ-001`、`REQ-020`）
 2. `Workspace.open()` 解析真实路径，验证目录和 Git 仓库，捕获 `GitBaseline`。（`REQ-002`）
-3. 预检 Java 内置要求以外的 `git`、`rg` 以及 Provider 配置；失败时不调用 LLM。（`REQ-001`、`REQ-006`）
+3. 预检 Java 内置要求以外的 `git`、`rg` 以及 Provider 配置；`openai` 要求 `OPENAI_API_KEY`，`deepseek` 要求 `DEEPSEEK_API_KEY`，失败时不创建 Provider 请求或调用 LLM。（`REQ-001`、`REQ-006`、`REQ-020`）
 4. 注册六个工具，生成不可变工具定义快照，创建 `RunContext` 与 `runId`。（`REQ-005`）
 
 ### 5.2 Agent Loop
@@ -136,6 +138,23 @@ OpenAI Adapter 负责把 `ProviderRequest` 映射为 Responses API 请求，把 
 
 V0.1 使用直接工具调用；不启用 Programmatic Tool Calling、多 Agent 或 Hosted Shell，因为本项目的目的正是让本地 Harness 观察并控制每一步。（`REQ-003`、范围外约束）
 
+### 5.4 DeepSeek Provider、配置与无状态续接
+
+CLI 增加 `deepseek` Provider 值。配置矩阵如下，密钥无 CLI 参数且不得跨行回退：（`REQ-001`、`REQ-013`、`REQ-020`）
+
+| 配置 | 命令行优先 | 环境变量 | 默认值 |
+|---|---|---|---|
+| Provider | `--provider deepseek` | 无 | `openai` |
+| API key | 不支持明文参数 | `DEEPSEEK_API_KEY` | 无，缺失即 `CONFIG_ERROR` |
+| Model | `--model` | `DEEPSEEK_MODEL` | 无，避免硬编码易变化别名 |
+| Base URL | `--base-url` | `DEEPSEEK_BASE_URL` | `https://api.deepseek.com` |
+
+`DeepSeekResponsesProvider` 使用 Java `HttpClient` 和 Jackson。它先以 URI 语义去除 Base URL 的尾部空路径段，再追加一个 `responses` 路径段：官方默认值解析为 `https://api.deepseek.com/responses`；自定义 Base URL 的既有路径原样保留，例如 `https://gateway.example/v1` 解析为 `https://gateway.example/v1/responses`。DeepSeek Adapter 不套用 OpenAI Adapter 自动注入 `/v1` 的规则，也不接受已包含 `/responses` 的 endpoint 冒充 Base URL。Bearer Auth 只在请求边界组装。它不得复用带有 OpenAI 名称、错误文案或配置语义的具体 Adapter；允许提取不对领域包公开的 Responses wire helper，但供应商错误分类和兼容差异仍由各 Adapter 持有。（`REQ-016`、`REQ-020`）
+
+DeepSeek 官方 Responses API 不支持 `previous_response_id`。第一次请求发送 task、instructions 与工具定义；后续请求从 `ProviderCursor.opaque` 读取 Adapter 私有、大小/项数有界的回放状态，按顺序发送必要的既有 `message`、`reasoning`、`function_call` output items 与新的 `function_call_output`。Adapter 从响应中保存下一轮所需的受支持 items，但不把 reasoning 正文写入日志或报告。超过回放上限、出现未知必要 item 或无法解析 arguments 时返回非重试 `PROTOCOL`，不静默丢失上下文。（`REQ-003`、`REQ-013`、`REQ-014`、`REQ-020`）
+
+DeepSeek 响应中的 function calls 仍映射为领域 `ToolCall`；多个调用按响应顺序交给现有 AgentRuntime 串行执行。DeepSeek API 即使并行生成工具调用，也不改变 V0.1 串行执行规则。响应 ID 用于报告关联而非服务端续接。（`REQ-004`、`REQ-020`）
+
 ## 6. 核心接口与数据契约
 
 以下为设计级 Java 形状，不是最终实现代码。
@@ -164,7 +183,7 @@ record ProviderResponse(
 ) {}
 ```
 
-`ProviderCursor` 是不透明值，可承载 `previous_response_id`、需要回放的响应项或其他 Provider 续接数据，不允许 AgentRuntime 依赖其内部结构。（`REQ-003`、`REQ-016`）
+`ProviderCursor` 是不透明值，可承载 OpenAI `previous_response_id`、DeepSeek 的有界回放状态或其他 Provider 续接数据，不允许 AgentRuntime 依赖其内部结构。Adapter 必须限制 cursor 序列化后的字节数、item 数和轮数，禁止无界累积。（`REQ-003`、`REQ-016`、`REQ-020`）
 
 ```java
 interface Tool<I> {
@@ -293,6 +312,7 @@ RUNNING/* → CANCELLED | POLICY_BLOCKED | CONFIG_ERROR | PROVIDER_ERROR
 | 配置 | 缺模型、路径非 Git | 否 | 启动前失败，给修复建议 |
 | Provider 瞬时 | 429、5xx、连接重置 | 有上限 | 指数退避 + jitter，尊重服务端提示 |
 | Provider 永久 | 401、Schema 不兼容 | 否 | `PROVIDER_ERROR`，脱敏响应 |
+| DeepSeek 余额 | 402 | 否 | `PROVIDER_ERROR`，明确余额不足但不包含密钥或原始敏感响应 |
 | 工具输入 | 非法路径/Schema | 否 | 返回模型，计入无进展检测 |
 | 策略 | 拒绝/未审批 | 否 | 返回模型；关键任务无法继续则停止 |
 | 进程 | 非零退出 | 由 Agent 判断 | 作为观察结果，不自动视为系统故障 |
@@ -319,7 +339,7 @@ RUNNING/* → CANCELLED | POLICY_BLOCKED | CONFIG_ERROR | PROVIDER_ERROR
 - 审批/策略摘要、截断与警告；
 - 后续建议，但不夸大未验证结果。
 
-`Redactor` 在日志、异常、工具输出和报告四个边界统一执行；至少对配置秘密精确替换，并对常见 Bearer/API key 模式做启发式遮蔽。（`REQ-012`、`REQ-013`）
+`Redactor` 在日志、异常、工具输出和报告四个边界统一执行；至少对当前所选 Provider 的配置秘密精确替换，并对常见 Bearer/API key 模式做启发式遮蔽。OpenAI 与 DeepSeek 密钥不得同时注入不相关 Provider 的配置或错误上下文。（`REQ-012`、`REQ-013`、`REQ-020`）
 
 ## 12. 测试设计
 
@@ -327,6 +347,7 @@ RUNNING/* → CANCELLED | POLICY_BLOCKED | CONFIG_ERROR | PROVIDER_ERROR
 
 - RunStateMachine、CompletionGate、预算与无进展检测。
 - JSON Schema 校验、ToolResult 序列化、Provider 接口合约。
+- DeepSeek 配置优先级、密钥隔离、Base URL 规范化与错误分类。
 - Windows 路径、`..`、符号链接/junction 边界。
 - CommandPolicy 的 allow/approve/deny 表驱动样例。
 - Redactor 对配置秘密和常见令牌格式的覆盖。
@@ -337,17 +358,18 @@ RUNNING/* → CANCELLED | POLICY_BLOCKED | CONFIG_ERROR | PROVIDER_ERROR
 - 补丁成功、上下文冲突、越界、多文件失败原子性。
 - ProcessRunner 的 stdout/stderr、非零退出、超时、输出截断与进程树清理。
 - ScriptedLlmProvider 驱动成功、失败修复、无进展、预算耗尽和审批拒绝场景。
+- 模拟 DeepSeek Responses API 的最终文本、单/多工具调用、无状态多轮回放、用量、401/402/429/5xx/超时/超限/畸形响应与脱敏。
 
 ### 12.3 端到端验收
 
-使用固定 Spring Boot fixture：预置一个有测试复现的空指针缺陷。Agent 需要定位问题、应用补丁、运行受控验证、最终报告 diff 和测试结果。离线主验收用 ScriptedLlmProvider；真实 OpenAI smoke test 单独标记且默认跳过，避免 CI 依赖秘密和公网。（`REQ-015`）
+使用固定 Spring Boot fixture：预置一个有测试复现的空指针缺陷。Agent 需要定位问题、应用补丁、运行受控验证、最终报告 diff 和测试结果。离线主验收用 ScriptedLlmProvider；真实 OpenAI 与 DeepSeek smoke test 使用不同 profile，均单独标记且默认跳过，避免 CI 依赖秘密和公网。（`REQ-015`、`REQ-020`）
 
 ## 13. 性能、兼容性与运维考虑
 
 - 文件/搜索/进程输出全程有界，避免单次结果耗尽上下文或内存。（`REQ-006`、`REQ-008`）
 - V0.1 串行执行工具，以确定性换取吞吐；未来只有在无副作用且无决策依赖时才考虑并行。（`REQ-004`）
 - 所有外部命令使用参数数组；Windows 的空格、Unicode、CRLF 和进程树行为纳入 CI/本机验收。（`REQ-016`）
-- 模型、Base URL、超时和重试配置化；不在领域层传播 OpenAI SDK/JSON 类型。（`REQ-003`、`REQ-016`）
+- Provider、模型、Base URL、超时和重试配置化；不在领域层传播 OpenAI/DeepSeek SDK 或 JSON wire 类型。（`REQ-003`、`REQ-016`、`REQ-020`）
 
 ### 13.1 产品命名与兼容边界
 
@@ -379,7 +401,7 @@ CLI 单元测试断言 command name、版本文本和示例；打包验证断言
 
 ## 14. 迁移、发布与回滚
 
-这是新建项目，无既有数据迁移。V0.1 发布物为可执行 JAR/分发包、README、安全边界和示例配置。产品、代码和文档改名通过一次 Java namespace 迁移、干净构建及文档目录迁移切换到 `mini-coder` 标识；废弃 package、制品和文档目录不作为兼容产物继续发布。若需要回滚，必须整体回退源码目录、Maven 坐标、入口类、规格目录和文档引用，避免混合命名。（`REQ-017`–`REQ-019`）
+这是新建项目，无既有数据迁移。V0.1 发布物为可执行 JAR/分发包、README、安全边界和示例配置。产品、代码和文档改名通过一次 Java namespace 迁移、干净构建及文档目录迁移切换到 `mini-coder` 标识；废弃 package、制品和文档目录不作为兼容产物继续发布。DeepSeek 通过新增 Adapter、配置分支和测试 profile 发布，不改变现有 OpenAI/scripted 行为；回滚 DeepSeek 时整体移除其 CLI 值、配置、Adapter、profile 和文档，不把 DeepSeek 密钥回退给 OpenAI。（`REQ-017`–`REQ-020`）
 
 实现回滚通过普通 Git 提交回退完成；运行期间不得自动 reset 用户工作区。若 Agent 产出的更改需要撤销，由用户审阅 diff 后使用其选择的版本控制流程处理，工具不代替用户执行破坏性恢复。（`REQ-009`、`REQ-013`）
 
@@ -394,8 +416,8 @@ CLI 单元测试断言 command name、版本文本和示例；打包验证断言
 ### 15.2 同时实现 OpenAI 与 DeepSeek
 
 - 优点：立即验证多 Provider。
-- 缺点：首版会把注意力从 Loop、安全与验证转移到两个变化中的线协议。
-- 决策：Fake Provider + 一个真实 OpenAI Provider 足以验证抽象；DeepSeek 后置。（`REQ-015`、`REQ-016`）
+- 缺点：增加无状态续接、供应商配置隔离和第二套错误分类的实现/测试成本。
+- 决策：用户已要求 DeepSeek 支持；使用独立 DeepSeek Responses Adapter 验证扩展边界，同时保留 AgentRuntime、ToolRegistry 和 CompletionGate 不变。（`REQ-015`、`REQ-016`、`REQ-020`）
 
 ### 15.3 只提供通用 Shell，不做专用文件工具
 
@@ -418,7 +440,7 @@ CLI 单元测试断言 command name、版本文本和示例；打包验证断言
 ## 16. 未解决设计决定
 
 - `DD-OPEN-001`：Maven 与 Gradle 的最终选择，当前按 `ASM-001` 采用 Maven。
-- `DD-OPEN-002`：是否在 V0.1 增加 DeepSeek Adapter，当前按 `ASM-003` 不增加。
+- `DD-OPEN-002`：是否暴露 DeepSeek 专用 thinking/reasoning effort 参数；当前按 `OQ-001` 不暴露，使用供应商默认行为。
 - `DD-OPEN-003`：审批交互的具体 UI 文案和超时时间，可在不改变风险分类语义的前提下实施时确定。
 - `DD-OPEN-004`：跨平台 CI 是否首版同时覆盖 Windows 与 Linux；最低验收必须覆盖 Windows。
 
@@ -445,10 +467,13 @@ CLI 单元测试断言 command name、版本文本和示例；打包验证断言
 | `REQ-017` | 13.1、14 |
 | `REQ-018` | 13.1、13.2、14 |
 | `REQ-019` | 3.2、6、12、13.1、13.3、14 |
+| `REQ-020` | 1、3–6、10–15 |
 
 ## 18. 参考资料
 
 - OpenAI 官方 Model guidance：<https://developers.openai.com/api/docs/guides/latest-model>
 - OpenAI 官方 Responses API 迁移/核心概念：<https://developers.openai.com/api/docs/guides/migrate-to-responses>
+- DeepSeek 官方 Responses API 与兼容性说明：<https://api-docs.deepseek.com/guides/responses_api/>
+- DeepSeek 官方认证与错误码：<https://api-docs.deepseek.com/api/deepseek-api/>、<https://api-docs.deepseek.com/quick_start/error_codes/>
 
-外部文档只约束 OpenAI Adapter；领域接口和其余需求不依赖某个模型版本。
+外部文档只约束各自 Provider Adapter；领域接口和其余需求不依赖某个模型版本。

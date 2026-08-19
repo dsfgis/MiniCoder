@@ -10,7 +10,7 @@ V0.1 的目标是：用户通过 CLI 指定一个本地 Git 工作区和一项�
 
 ### 2.1 已确认事实
 
-- `FACT-001`：当前 `D:\study\code\agentcode` 目录为空，且尚未初始化为 Git 仓库。
+- `FACT-001`：当前 `D:\study\code\agentcode` 已是实现完成并推送到 `origin/main` 的 Git 仓库，现有离线基线为 53 个测试。
 - `FACT-002`：目标是先实现 Coding Agent Harness，而不是训练专用模型。
 - `FACT-003`：V0.1 采用 Java 21，提供 CLI、LLM Provider 抽象、Agent Loop 和本地工具。
 - `FACT-004`：V0.1 的核心工具范围为 `list_files`、`read_file`、`search_code`、`apply_patch`、`shell`、`git_diff`。
@@ -18,12 +18,13 @@ V0.1 的目标是：用户通过 CLI 指定一个本地 Git 工作区和一项�
 - `FACT-006`：用户于 2026-08-17 要求将产品名称统一为 `Mini Coder`。
 - `FACT-007`：用户随后要求所有涉及产品名称的文档统一采用 `Mini Coder`，不再保留旧产品名或旧规格目录 slug。
 - `FACT-008`：用户进一步要求代码中的相关命名也统一为 `Mini Coder`，因此此前拟保留内部 Java package 的默认方案不再适用。
+- `FACT-009`：用户于 2026-08-18 要求增加 DeepSeek API key 支持；这会把 DeepSeek 提升为第二个真实 Provider，属于已批准规格范围之外的实质变更，必须先重新批准四份规格。
 
 ### 2.2 待确认假设
 
 - `ASM-001`：项目采用 Maven 单模块结构，使用 Maven Wrapper；主要依赖为 Picocli、Jackson、SLF4J/Logback 和 JUnit 5。
 - `ASM-002`：首个真实 Provider 使用 OpenAI Responses API；具体模型必须由 CLI、配置文件或环境变量提供，不硬编码“最新模型”。
-- `ASM-003`：DeepSeek 仅通过稳定的 `LlmProvider` 扩展点预留，不在 V0.1 实现范围内。
+- `ASM-003`：DeepSeek 使用官方 Responses API、独立 `DeepSeekResponsesProvider` 和 `DEEPSEEK_API_KEY`；模型仍由 `--model` 或 `DEEPSEEK_MODEL` 显式指定，不硬编码会变化的模型别名。
 - `ASM-004`：Windows 11 是首要开发环境，但路径、进程和换行处理不得有意阻止 Linux/macOS 运行。
 - `ASM-005`：目标工作区必须是现有 Git 仓库；V0.1 不负责自动建仓、创建提交、切分支或推送远端。
 - `ASM-006`：测试验收使用一个受控的 Spring Boot 示例仓库，同时核心文件工具保持语言无关。
@@ -32,7 +33,7 @@ V0.1 的目标是：用户通过 CLI 指定一个本地 Git 工作区和一项�
 
 ### 2.3 开放问题（不阻塞文档草案）
 
-- `OQ-001`：实现前是否要将 DeepSeek 提升为 V0.1 的第二个真实 Provider？默认答案：否，先用 Fake Provider + OpenAI Provider 验证抽象边界。
+- `OQ-001`：是否暴露 DeepSeek thinking/reasoning effort 专用 CLI 参数？默认答案：否；本次只接入 Provider、密钥、模型、Base URL、工具调用与续接，供应商专用推理参数留待后续需求。
 - `OQ-002`：默认构建工具是否改用 Gradle？默认答案：否，采用 Maven Wrapper。
 - `OQ-003`：高风险命令是“始终拒绝”还是“交互审批后允许”？默认答案：破坏性命令始终拒绝；可恢复但有外部副作用的命令需要审批。
 - `OQ-004`：首版是否需要真正的 OS 级沙箱？默认答案：否，但发布说明必须明确安全边界。
@@ -188,12 +189,23 @@ V0.1 的目标是：用户通过 CLI 指定一个本地 Git 工作区和一项�
 - `AC-051` Given 完成迁移后的受版本控制树，When 扫描文件内容与路径中的废弃人类名、slug、camel 和 package 变体，Then 命中数为 0；`.git/` 历史对象和忽略的 `target/` 不属于当前树扫描范围。
 - `AC-052` Given 迁移后的最终 revision，When 执行 Java 21 `clean verify`、连续两次离线 E2E 及打包 CLI 验收，Then 全部规定命令得到预期退出码，测试数量不减少，且无需真实 API key 或公网。
 
+### REQ-020 DeepSeek API Provider 与密钥配置
+
+系统必须把 `deepseek` 作为第二个真实 `LlmProvider` 提供给 CLI。DeepSeek 密钥只能从 `DEEPSEEK_API_KEY` 读取；模型按 `--model` 高于 `DEEPSEEK_MODEL` 的优先级选择；Base URL 按 `--base-url` 高于 `DEEPSEEK_BASE_URL`、再高于官方默认 `https://api.deepseek.com` 的优先级选择。DeepSeek Adapter 必须使用官方 Responses API，封装其无状态续接差异，不得把 DeepSeek 线协议或密钥泄漏到 AgentRuntime、领域模型、日志和报告。
+
+- `AC-053` Given `--provider deepseek`、合法工作区、`DEEPSEEK_API_KEY` 和显式模型，When 启动 CLI，Then 系统选择 DeepSeek Adapter，使用 Bearer 认证，将默认 Base URL 解析为 `https://api.deepseek.com/responses`；自定义 Base URL 保留已有路径并只追加一个 `/responses` 段，不自动注入 `/v1`，且报告中的 Provider 标识为 `deepseek`。
+- `AC-054` Given 选择 `deepseek` 但缺少/空白 `DEEPSEEK_API_KEY` 或模型，When 启动 CLI，Then 在创建 Provider 请求和执行任何工具前以 `CONFIG_ERROR` 失败；不得回退读取 `OPENAI_API_KEY`，错误、普通日志、DEBUG、ToolResult、终端和 JSON 中不得出现原始 DeepSeek 密钥。
+- `AC-055` Given DeepSeek Responses API 返回最终文本、单个或多个 function call，When Agent 继续一轮或多轮工具交互，Then 调用 ID、名称、参数、响应顺序和用量无损映射；由于官方接口不支持 `previous_response_id`，Adapter 通过有界的 Provider 私有 cursor 回放必要的已支持 output items 与 tool results，AgentRuntime 无需修改控制流。
+- `AC-056` Given DeepSeek 返回 400/422、401、402、429、5xx、超时、超限或畸形响应，When Adapter 处理错误，Then 仅 429、合格 5xx 和瞬时传输错误在总时限与重试预算内重试；配置/认证/余额/协议错误不重试，并返回已脱敏、供应商标识正确的结构化 `ProviderException`。
+- `AC-057` Given 未设置任何真实 Provider 密钥且无公网，When 执行默认测试、DeepSeek 合约测试和离线 E2E，Then 全部可确定性运行；真实 DeepSeek smoke 只在显式 profile、凭据、模型和用户网络授权同时存在时运行，否则默认跳过且不阻塞离线发布。
+- `AC-058` Given README、CLI `--help`、示例配置和发布包，When 用户查找 Provider 配置，Then 文档准确列出 `openai`、`deepseek`、`scripted`，分别说明密钥/模型/Base URL 环境变量、优先级、安全边界和至少一个不含真实密钥的 DeepSeek 示例。
+
 ## 5. 范围
 
 ### 5.1 V0.1 范围内
 
 - Java 21 CLI 应用与 Maven Wrapper。
-- Provider 无关的 Agent Loop、OpenAI Responses API Provider、Fake Provider。
+- Provider 无关的 Agent Loop、OpenAI Responses API Provider、DeepSeek Responses API Provider、Fake Provider。
 - 六个核心工具及统一 Tool Registry/Schema/Result 契约。
 - 单任务内的消息/响应续接、工具结果反馈和停止条件。
 - Git 基线、差异归属、验证闭环与最终报告。
@@ -202,11 +214,12 @@ V0.1 的目标是：用户通过 CLI 指定一个本地 Git 工作区和一项�
 - `Mini Coder` 对外品牌、`mini-coder` CLI usage name 与发行制品命名。
 - 全部当前文档及规格目录的 `Mini Coder` 命名迁移与链接校验。
 - Java 主代码/测试代码、Maven 坐标和可执行入口的 `dev.minicoder` 命名空间迁移。
+- DeepSeek Provider 的 `DEEPSEEK_API_KEY`、`DEEPSEEK_MODEL`、`DEEPSEEK_BASE_URL` 配置、无状态 Responses API 续接适配、离线合约测试和可选真实 smoke profile。
 
 ### 5.2 V0.1 范围外
 
 - 模型训练、微调或本地推理引擎。
-- DeepSeek/Claude/Qwen/Ollama 等第二个真实 Provider。
+- Claude/Qwen/Ollama 等其他真实 Provider，以及 DeepSeek 专用 thinking/reasoning effort CLI 控制。
 - 多 Agent、Planner/Reviewer 分工和并行编排。
 - RAG、向量数据库、长期记忆、跨进程会话恢复和自动上下文压缩。
 - MCP、Skills、IDE 插件、GUI、Web 服务和云执行。
@@ -217,7 +230,8 @@ V0.1 的目标是：用户通过 CLI 指定一个本地 Git 工作区和一项�
 ## 6. 约束与依赖
 
 - Java 21 JDK、Git 和 ripgrep 在本机可用；构建通过 Maven Wrapper 完成。
-- 真实 OpenAI 验收需要有效 API 凭据、可用模型权限和网络；这些不是离线测试的前提。
+- 真实 OpenAI/DeepSeek 验收分别需要有效 API 凭据、可用模型权限和网络；这些不是离线测试的前提，两个 Provider 的密钥不得互相回退或混用。
+- DeepSeek 官方 Responses API 当前使用 Bearer Auth 和 `https://api.deepseek.com`，且不支持 `previous_response_id`；Adapter 必须在私有、有界 cursor 中维护续接所需回放数据，不得依赖服务端会话状态。
 - API、模型名与账户权限会变化，因此模型必须配置化，Provider 线协议必须封装在适配器内。
 - V0.1 运行目标应是受信任或一次性测试仓库；命令策略不能替代 OS 级隔离。
 - 多文件补丁的事务语义仅覆盖可测试的正常进程内失败；崩溃一致性和断电恢复不在 V0.1 范围内。
@@ -233,6 +247,7 @@ V0.1 的目标是：用户通过 CLI 指定一个本地 Git 工作区和一项�
 - `US-006`：作为 CLI 用户，我想看到统一的 `Mini Coder` 品牌和 `mini-coder` 发行标识，以便文档、帮助与下载制品不会出现名称混用。
 - `US-007`：作为文档读者，我想让所有当前文档和规格路径都使用 `Mini Coder` 命名，以便导航、搜索和引用结果一致。
 - `US-008`：作为 Java 维护者，我想让源码、测试、Maven 坐标和入口类统一使用 `dev.minicoder`，以便代码搜索与发布坐标不再混用旧命名。
+- `US-009`：作为 DeepSeek API 用户，我想通过 `DEEPSEEK_API_KEY` 和 `--provider deepseek` 运行同一套 Coding Agent Loop，以便在不改动工具、安全策略和完成门的情况下选择第二个真实模型供应商。
 
 ## 8. 验收总则
 

@@ -14,14 +14,14 @@
   - **关联任务**：实施前门禁。
   - **验证方法**：人工逐项审阅，并记录每个待确认假设/开放问题的“接受、修改或延期”决定。
   - **预期结果**：不存在被悄然当成事实的假设；所有会影响 V0.1 实现的默认选择都有明确决定。
-  - **证据**：用户于 2026-08-18 明确确认当前四份规格，接受 `REQ-018`、`REQ-019` 及其默认决策，并授权实施 `TASK-018`、`TASK-019`。
+  - **证据**：用户于 2026-08-19 明确确认当前四份规格文档，接受 `ASM-003`、`OQ-001` 和 `REQ-020` 默认决策，并授权按 `TASK-020`、`TASK-021` 实施。
 
 - [x] `CHECK-002` **需求可测试性与逐级追踪完整**
-  - **引用**：`REQ-001`–`REQ-019`；`AC-001`–`AC-052`；`design.md` 17；`tasks.md` 4。
+  - **引用**：`REQ-001`–`REQ-020`；`AC-001`–`AC-058`；`design.md` 17；`tasks.md` 4。
   - **关联任务**：文档一致性检查。
   - **验证方法**：运行规格 ID 校验脚本/人工交叉表，确认每个 REQ 有 AC，每个 REQ 有设计映射，每个 REQ/AC 至少映射到一个 TASK 和一个 CHECK。
   - **预期结果**：无缺失 ID、重复 ID、孤立设计、孤立任务或孤立验收标准。
-  - **证据**：只读一致性检查为 19 REQ、52 AC、19 TASK、31 CHECK；ID 无重复，19 个需求均有设计和任务映射，`AC-001`–`AC-052` 均有检查项覆盖。
+  - **证据**：本次规格一致性检查为 20 REQ、58 AC、21 TASK、35 CHECK；ID 无重复，20 个需求均有设计和任务映射，展开 ID 区间后 `AC-001`–`AC-058` 均有任务与检查项覆盖。
 
 - [x] `CHECK-003` **V0.1 安全边界与风险接受已确认**
   - **引用**：`REQ-008`、`REQ-010`、`REQ-013`；`AC-022`、`AC-025`–`AC-027`、`AC-034`；`design.md` 8、15.4。
@@ -35,23 +35,23 @@
   - **关联任务**：`TASK-001` 的前置条件。
   - **验证方法**：用户明确确认四份当前文档，而不是只确认其中一份或原始想法。
   - **预期结果**：存在清晰、可追溯的整体批准；批准后才能修改产品代码、测试、依赖或配置。
-  - **证据**：用户于 2026-08-18 明确批准包含 `REQ-018`、`REQ-019` 的当前 `requirements.md`、`design.md`、`tasks.md`、`check_list.md`，并授权修改代码、文档及推送 `origin/main`。
+  - **证据**：用户于 2026-08-19 明确批准包含 `REQ-020`、`TASK-020`、`TASK-021` 和 `CHECK-032`–`CHECK-035` 的当前四份规格文档，规格门禁已解除。
 
 ## 3. 构建、CLI 与配置
 
 - [x] `CHECK-005` **Java 21 工程可重复构建且测试不依赖真实密钥**
-  - **引用**：`REQ-015`、`REQ-016`；`AC-037`；`design.md` 12、13。
-  - **关联任务**：`TASK-001`、`TASK-014`、`TASK-016`。
+  - **引用**：`REQ-015`、`REQ-016`、`REQ-020`；`AC-037`、`AC-057`；`design.md` 12、13。
+  - **关联任务**：`TASK-001`、`TASK-014`、`TASK-016`、`TASK-021`。
   - **验证方法**：在未设置 Provider 密钥的干净检出中执行 `.\mvnw.cmd -q clean verify`。
   - **预期结果**：退出码 0；全部默认测试通过；构建日志不尝试真实 Provider 网络调用。
-  - **证据**：2026-08-18 在 Oracle JDK 21.0.11 执行最终 `clean verify`，退出码 0；23 suites、53 tests、0 failure、0 error、3 skipped，未调用真实 Provider。
+  - **证据**：2026-08-19 显式使用 Oracle JDK 21.0.11 执行最终 `clean verify`，退出 0；25 suites、65 tests、0 failure、0 error、4 skipped；默认跳过两项离线 E2E 场景和两个真实 Provider smoke，未使用真实密钥或公网。
 
 - [x] `CHECK-006` **CLI 启动、runId、缺参失败与帮助信息正确**
-  - **引用**：`REQ-001`；`AC-001`、`AC-002`、`AC-003`；`design.md` 5.1、10。
-  - **关联任务**：`TASK-003`、`TASK-013`、`TASK-016`。
+  - **引用**：`REQ-001`、`REQ-020`；`AC-001`–`AC-003`、`AC-053`、`AC-054`、`AC-058`；`design.md` 5.1、5.4、10。
+  - **关联任务**：`TASK-003`、`TASK-013`、`TASK-016`、`TASK-020`、`TASK-021`。
   - **验证方法**：运行 CLI 的合法 Fake Provider 示例、缺任务/模型/Provider/密钥组合以及 `--help`。
-  - **预期结果**：合法运行在工具前显示唯一 runId；缺参在工具前以非零码失败；帮助列出参数、环境变量、安全边界和示例。
-  - **证据**：`CliTest` 随最终构建通过；Unicode/空格目录中的 fat JAR `--help`、`--version` 均退出 0，scripted 运行报告 runId `e5c4ad60-999d-4d75-96be-23c09c736c8f`、`SUCCEEDED_WITH_WARNINGS`/10，控制台与 JSON 一致。
+  - **预期结果**：合法运行在工具前显示唯一 runId；缺参在工具前以非零码失败；帮助列出三个 Provider、各自环境变量、安全边界和示例；密钥不接受明文 CLI 参数。
+  - **证据**：`CliTest` 覆盖未知 Provider、DeepSeek 缺 key/模型和跨 Provider key 隔离；JDK 21 下 Unicode/空格目录的 fat JAR help/version 均退出 0，scripted 运行退出预期 10 并生成 JSON；help 列出三种 Provider、DeepSeek 三个环境变量、示例和非沙箱警告。
 
 ## 4. 工作区与路径边界
 
@@ -79,11 +79,11 @@
 ## 5. Provider 与 Agent Loop
 
 - [x] `CHECK-010` **Provider 工具调用与续接关联无损**
-  - **引用**：`REQ-003`、`REQ-016`；`AC-007`、`AC-039`；`design.md` 5.3、6。
-  - **关联任务**：`TASK-002`、`TASK-011`、`TASK-012`、`TASK-015`。
-  - **验证方法**：运行 `*ProviderContractTest,*OpenAiWireMockTest`，覆盖单/多工具调用、调用 ID、Provider cursor 和 ToolResult 回传。
-  - **预期结果**：名称、参数、`callId` 和续接状态无损；Fake/OpenAI Provider 通过同一合约。
-  - **证据**：`LlmProviderContractTest`、`OpenAiProviderContractTest`、`AgentRuntimeTest`；规定选择器退出 0。
+  - **引用**：`REQ-003`、`REQ-016`、`REQ-020`；`AC-007`、`AC-039`、`AC-055`；`design.md` 5.3、5.4、6。
+  - **关联任务**：`TASK-002`、`TASK-011`、`TASK-012`、`TASK-015`、`TASK-020`。
+  - **验证方法**：运行 `*LlmProviderContractTest,*OpenAiProviderContractTest,*DeepSeekProviderContractTest`，覆盖单/多工具调用、调用 ID、Provider cursor、DeepSeek 无状态回放和 ToolResult 回传。
+  - **预期结果**：名称、参数、`callId`、顺序和续接状态无损；Fake/OpenAI/DeepSeek Provider 通过同一领域合约，AgentRuntime 无供应商分支。
+  - **证据**：规定的 Provider 定向选择器退出 0；`DeepSeekProviderContractTest` 断言最终文本、两个有序 function call、call ID/参数/用量、两轮 tool result 回放，且 `AgentRuntime` 无 DeepSeek 类型引用。
 
 - [x] `CHECK-011` **最终文本触发完成门且工具顺序确定**
   - **引用**：`REQ-003`、`REQ-004`；`AC-008`、`AC-010`；`design.md` 5.2、9.2。
@@ -93,11 +93,11 @@
   - **证据**：`AgentRuntimeTest` 断言 callId 顺序与 CompletionGate；Spring E2E 事件顺序 c1→c4。
 
 - [x] `CHECK-012` **Provider 瞬时错误有界重试、永久错误立即失败**
-  - **引用**：`REQ-003`；`AC-009`；`design.md` 10。
-  - **关联任务**：`TASK-011`、`TASK-012`、`TASK-015`。
-  - **验证方法**：模拟 429、5xx、连接失败、401 和畸形响应，运行 `*OpenAiProvider*Test`。
-  - **预期结果**：仅瞬时错误在预算内退避重试；401/协议错误不重试；总时限不被绕过；输出已脱敏。
-  - **证据**：OpenAI contract tests 覆盖 429/500 重试、Retry-After 总时限、401 不重试、畸形响应与脱敏。
+  - **引用**：`REQ-003`、`REQ-020`；`AC-009`、`AC-056`；`design.md` 10。
+  - **关联任务**：`TASK-011`、`TASK-012`、`TASK-015`、`TASK-020`。
+  - **验证方法**：分别模拟 OpenAI/DeepSeek 的 400/401/402/422/429/5xx、连接失败、总时限和畸形响应，运行对应 Provider contract tests。
+  - **预期结果**：仅瞬时错误在预算内退避重试；配置/401/402/协议错误不重试；总时限不被绕过；错误使用正确供应商名称且输出已脱敏。
+  - **证据**：DeepSeek mock 合同覆盖 400/401/402/403/422/429/500/503、请求超时、畸形 JSON/arguments 和未知 item；429/5xx 标记可重试，永久错误不重试，429→成功只重试一次，错误正文中的测试 key 被脱敏。
 
 - [x] `CHECK-013` **迭代、总时限、取消与无进展均能停止循环**
   - **引用**：`REQ-004`；`AC-011`、`AC-012`；`design.md` 5.2、9、10。
@@ -174,11 +174,11 @@
   - **证据**：`RunReportTest`、`CliTest` 与 packaged scripted report；状态、runId、退出码和用量一致。
 
 - [x] `CHECK-023` **秘密脱敏与安全警告覆盖所有输出边界**
-  - **引用**：`REQ-013`；`AC-033`、`AC-034`；`design.md` 8.3、11。
-  - **关联任务**：`TASK-003`、`TASK-008`、`TASK-011`、`TASK-016`。
+  - **引用**：`REQ-013`、`REQ-020`；`AC-033`、`AC-034`、`AC-054`；`design.md` 8.3、11。
+  - **关联任务**：`TASK-003`、`TASK-008`、`TASK-011`、`TASK-016`、`TASK-020`、`TASK-021`。
   - **验证方法**：向配置、异常、命令参数和模拟 Provider 响应注入唯一测试秘密；扫描普通/DEBUG 日志、ToolResult、终端、JSON；人工审阅 README/`--help`。
-  - **预期结果**：原始秘密零出现，统一显示脱敏标记；文档明确没有 OS 沙箱且不得对不可信仓库运行。
-  - **证据**：`RedactorTest`、OpenAI error test、RunReport secret injection；README/help 安全警告人工审阅。
+  - **预期结果**：OpenAI/DeepSeek 原始秘密零出现，密钥不跨 Provider 读取，统一显示脱敏标记；文档明确没有 OS 沙箱且不得对不可信仓库运行。
+  - **证据**：`RunConfigTest`/`CliTest`/`RedactorTest`/DeepSeek 错误合同均通过；扫描 Surefire、packaged help/error、scripted terminal/error 和 JSON 报告，两种唯一 `sk-...` 测试 token 的文件命中数为 0；help/README 保留非沙箱与可信仓库警告。
 
 - [x] `CHECK-024` **结构化事件可还原顺序并记录截断事实**
   - **引用**：`REQ-014`；`AC-035`、`AC-036`；`design.md` 11.1。
@@ -194,14 +194,14 @@
   - **关联任务**：`TASK-002`、`TASK-014`。
   - **验证方法**：连续两次执行 `.\mvnw.cmd -q -Poffline-e2e verify`，覆盖成功、验证失败、循环、越界、补丁冲突、审批拒绝和预算耗尽。
   - **预期结果**：两次均退出 0；每个场景终态、事件顺序和最终文件哈希一致；无需公网和 API key。
-  - **证据**：2026-08-18 在 namespace 与文档迁移后的工作树连续两次执行 `.\mvnw.cmd -q -Poffline-e2e verify`，两次退出码均为 0，无真实 API key 或公网依赖。
+  - **证据**：2026-08-19 在 DeepSeek 变更工作树连续两次执行 `.\mvnw.cmd -q -Poffline-e2e verify`，两次退出码均为 0，无真实 API key 或公网依赖；此前 namespace/文档迁移证据继续保留。
 
 - [x] `CHECK-026` **Spring Boot 缺陷修复端到端闭环成立**
   - **引用**：`REQ-002`–`REQ-012`；`AC-006`、`AC-010`、`AC-018`、`AC-020`、`AC-023`、`AC-028`、`AC-031`；`design.md` 12.3。
   - **关联任务**：`TASK-014`。
   - **验证方法**：在固定 fixture 上用 ScriptedLlmProvider 执行“定位空指针 → 读取 → 补丁 → 测试 → diff → 完成”任务。
   - **预期结果**：初始测试失败；Agent 只修改预期文件；最后 revision 的测试退出码 0；最终状态 `SUCCEEDED`；报告含准确 diff 与验证证据。
-  - **证据**：两次 `offline-e2e` profile 均通过；固定 Spring Boot fixture 的定位、读取、patch、验证、diff、CompletionGate 闭环在新 namespace 下重复成立。
+  - **证据**：2026-08-19 两次 `offline-e2e` profile 均通过；固定 Spring Boot fixture 的定位、读取、patch、验证、diff、CompletionGate 闭环在加入 DeepSeek Provider 后重复成立。
 
 - [ ] `CHECK-027` **真实 OpenAI Provider smoke（可选、非离线发布门禁）**
   - **引用**：`REQ-003`、`REQ-013`、`REQ-015`、`REQ-016`；`AC-007`–`AC-009`、`AC-033`、`AC-039`；`design.md` 5.3、12.3。
@@ -211,11 +211,11 @@
   - **证据**：N/A；本轮未提供或授权使用真实 OpenAI 凭据/网络执行。该项为可选且非离线发布门禁。
 
 - [x] `CHECK-028` **发布包、文档与范围边界最终审计通过**
-  - **引用**：`REQ-001`、`REQ-012`、`REQ-013`、`REQ-016`；`AC-003`、`AC-031`、`AC-032`、`AC-034`、`AC-041`；`design.md` 13、14。
-  - **关联任务**：`TASK-016`。
+  - **引用**：`REQ-001`、`REQ-012`、`REQ-013`、`REQ-016`、`REQ-020`；`AC-003`、`AC-031`、`AC-032`、`AC-034`、`AC-041`、`AC-057`、`AC-058`；`design.md` 13、14。
+  - **关联任务**：`TASK-016`、`TASK-021`。
   - **验证方法**：执行 `.\mvnw.cmd -q clean verify`，检查发布包内容与 `git status --short`，在含空格/中文路径运行 `--help` 和离线示例，人工审阅 README 与变更记录。
-  - **预期结果**：发布包可启动；源码树只含预期文件；文档列出依赖、配置、退出码、示例、安全边界和范围外能力；没有声称支持 DeepSeek、多 Agent、MCP 或强沙箱。
-  - **证据**：最终 `clean verify` 退出 0；ZIP 根目录为 `mini-coder/` 且包含 `mini-coder.jar`、README、ARCHITECTURE、CHANGELOG 与 Wrapper；fat JAR 不含 Spring framework classes；Unicode/空格路径 packaged CLI 验收通过；文档安全边界与范围审计无扩张。
+  - **预期结果**：发布包可启动；源码树只含预期文件；文档列出三个 Provider 的隔离配置、退出码、示例、安全边界和范围外能力；不声称支持其他真实 Provider、多 Agent、MCP 或强沙箱。
+  - **证据**：最终 clean verify 与双 E2E 退出 0；fat JAR 含 DeepSeek Adapter、无 Spring classes，manifest 入口正确；ZIP 含 `mini-coder.jar`、README、ARCHITECTURE、CHANGELOG 和 Wrapper；10 个 Markdown、1 个相对链接、0 个缺失目标；制品哈希见 `docs/verification-evidence.md`。用户已有 `.gitignore` 改动被保留且未归入本任务实现。
 
 - [x] `CHECK-029` **Mini Coder 产品改名完整且可发布**
   - **引用**：`REQ-017`；`AC-042`–`AC-045`；`design.md` 13.1、14。
@@ -237,6 +237,34 @@
   - **验证方法**：枚举主/测试 Java 路径和声明；检查 Maven effective coordinates、shade `mainClass`、fat JAR manifest；扫描受版本控制树废弃命名；执行最终 clean verify、两次 offline-e2e 和 packaged CLI 验收。
   - **预期结果**：源码、测试、Maven 与 manifest 只使用 `dev.minicoder`；废弃命名命中 0；53 个或更多测试无失败/错误；两次 E2E 退出 0；fat JAR `--help`/`--version` 可运行。
   - **证据**：主/测试源码仅位于 `dev/minicoder` 且声明/引用统一；POM effective coordinates 为 `dev.minicoder:mini-coder`，shade 与 manifest `Main-Class` 均为 `dev.minicoder.cli.Main`；最终 53 tests 无失败/错误，双 E2E 与 fat JAR CLI 通过，废弃命名命中 0；制品哈希见 `docs/verification-evidence.md`。
+
+- [x] `CHECK-032` **DeepSeek 配置选择、密钥隔离与启动前失败正确**
+  - **引用**：`REQ-001`、`REQ-013`、`REQ-020`；`AC-002`、`AC-033`、`AC-053`、`AC-054`；`design.md` 5.1、5.4、11。
+  - **关联任务**：`TASK-020`、`TASK-021`。
+  - **验证方法**：运行 `*RunConfigTest,*CliTest,*RedactorTest`，用独立测试值覆盖 `--provider deepseek`、CLI/环境优先级、缺密钥/模型、OpenAI key 已设置但 DeepSeek key 缺失、Base URL 规范化和所有输出边界；不得输出真实环境变量值。
+  - **预期结果**：只读取 `DEEPSEEK_API_KEY`；模型/Base URL 优先级符合矩阵；缺配置在 HTTP/工具前 `CONFIG_ERROR`；help 列出三个 Provider；测试密钥在普通/DEBUG/异常/终端/JSON 中命中 0。
+  - **证据**：规定定向测试退出 0；`ProviderConfig` 断言 CLI > DeepSeek 环境变量 > 默认 Base URL，缺 DeepSeek key/模型时在工作区/HTTP 前 `CONFIG_ERROR`，设置 OpenAI key 也不回退；配置字符串和全部已验收输出无测试 key；packaged help 结果通过。
+
+- [x] `CHECK-033` **DeepSeek Responses 工具调用与无状态多轮回放无损**
+  - **引用**：`REQ-003`、`REQ-004`、`REQ-016`、`REQ-020`；`AC-007`、`AC-010`、`AC-039`、`AC-055`；`design.md` 5.2、5.4、6。
+  - **关联任务**：`TASK-020`。
+  - **验证方法**：使用本地 mock HTTP server 执行最终文本、单/多 function call、两轮以上 tool result 续接、reasoning/message/function_call item 回放、非法 arguments、cursor 字节/item/轮数上限；比对每轮 JSON 和领域对象，不访问公网。
+  - **预期结果**：默认 Base URL 精确解析为 `https://api.deepseek.com/responses`；自定义 Base URL 保留已有路径且只追加一个 `/responses`，不自动注入 `/v1`，已包含 `/responses` 的 endpoint 输入被配置校验拒绝；Bearer header 使用测试 key；不发送无效 `previous_response_id` 续接；必要 output items 与 tool results 按序回放；call ID/名称/参数/用量无损；多个工具仍由 AgentRuntime 串行执行；超限或无法保真时明确 `PROTOCOL` 失败。
+  - **证据**：`DeepSeekProviderContractTest` 7 个测试通过；断言默认/custom/编码/规范化 endpoint、Bearer、无 `previous_response_id`、message/reasoning/function calls/tool results 顺序、arguments/用量和 30 轮/512 items/1 MiB cursor 上限；非法 endpoint、arguments、未知 item 和超限均为 `PROTOCOL`。
+
+- [x] `CHECK-034` **DeepSeek 错误矩阵、离线回归和发布文档通过**
+  - **引用**：`REQ-012`–`REQ-016`、`REQ-020`；`AC-031`–`AC-039`、`AC-056`–`AC-058`；`design.md` 10–14。
+  - **关联任务**：`TASK-020`、`TASK-021`。
+  - **验证方法**：模拟 400/401/402/422/429/5xx、超时、超限和畸形响应；执行最终 `.\mvnw.cmd -q clean verify`、连续两次 `.\mvnw.cmd -q -Poffline-e2e verify`、packaged help/scripted CLI、文档链接/配置名/密钥扫描和发布包审计。
+  - **预期结果**：错误分类、重试次数、总时限和供应商文案正确且已脱敏；默认与 E2E 无真实密钥/公网；测试数不少于 53；README/help/ARCHITECTURE/CHANGELOG/规则文件准确说明三个 Provider、配置优先级、可选 smoke 和安全边界。
+  - **证据**：错误矩阵和定向测试退出 0；最终 clean verify 为 65 tests、0 failure/error；双 E2E 退出 0；packaged help/version 为 0、scripted 为预期 10；文档/规则/链接/Provider 名称/环境变量/秘密/制品审计通过，SHA-256 见 `docs/verification-evidence.md`。
+
+- [x] `CHECK-035` **真实 DeepSeek Provider smoke（可选、非离线发布门禁）**
+  - **引用**：`REQ-003`、`REQ-013`、`REQ-015`、`REQ-020`；`AC-053`、`AC-055`、`AC-057`；`design.md` 5.4、12.3。
+  - **关联任务**：`TASK-021`。
+  - **验证方法**：仅在用户另行明确授权、设置 `DEEPSEEK_API_KEY`、模型且允许公网时，在一次性临时 Git 仓库执行 `.\mvnw.cmd -q -Pdeepseek-smoke verify`。
+  - **预期结果**：至少完成一次真实 DeepSeek Responses function call 与 tool result 续接；无密钥泄露；账户余额、权限、模型或网络阻塞与产品失败分开记录。
+  - **证据**：2026-08-19 用户提供 DeepSeek 凭据并明确要求立即接入，构成本次真实公网 smoke 授权。JDK 21 下以进程级 `DEEPSEEK_MODEL=deepseek-v4-flash` 执行 `.\mvnw.cmd -q -Pdeepseek-smoke verify` 退出 0；`DeepSeekSmokeTest` 为 1 test、0 failure、0 error、0 skipped，完成一次真实 Responses function call 和 tool result 续接。测试仅使用内存 fixture，未执行真实工作区工具；扫描全部 Surefire 报告，用户环境中的 DeepSeek key 原文命中文件数为 0。
 
 ## 9. 验收标准到检查项覆盖表
 
@@ -273,5 +301,10 @@
 | `AC-042`–`AC-045` | `CHECK-029` |
 | `AC-046`–`AC-048` | `CHECK-030` |
 | `AC-049`–`AC-052` | `CHECK-031` |
+| `AC-053`–`AC-054` | `CHECK-006`、`CHECK-023`、`CHECK-032` |
+| `AC-055` | `CHECK-010`、`CHECK-033`、`CHECK-035` |
+| `AC-056` | `CHECK-012`、`CHECK-034` |
+| `AC-057` | `CHECK-005`、`CHECK-028`、`CHECK-034`、`CHECK-035` |
+| `AC-058` | `CHECK-006`、`CHECK-028`、`CHECK-034` |
 
-当前覆盖结论：`AC-001` 至 `AC-052` 均映射到至少一个检查项；Java namespace、文档路径、构建/CLI、离线 E2E、发布及改名证据已在最终迁移 revision 重新闭合。`CHECK-027` 仍为可选且本轮未授权执行。
+当前覆盖结论：`AC-001` 至 `AC-058` 均映射到至少一个检查项；DeepSeek Provider 的配置、合同、错误、脱敏、离线回归、真实 smoke 和发布检查均已由当前证据闭合。仅 `CHECK-027` 可选 OpenAI smoke 未授权执行并保持 N/A，不阻塞离线发布。

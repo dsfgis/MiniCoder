@@ -4,6 +4,7 @@ public final class ProviderException extends Exception {
     public enum Category {
         AUTHENTICATION,
         AUTHORIZATION,
+        INSUFFICIENT_BALANCE,
         RATE_LIMIT,
         TRANSIENT,
         TIMEOUT,
@@ -41,4 +42,3 @@ public final class ProviderException extends Exception {
         return statusCode;
     }
 }
-

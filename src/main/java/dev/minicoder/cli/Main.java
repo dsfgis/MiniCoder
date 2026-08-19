@@ -5,6 +5,7 @@ import dev.minicoder.config.*;
 import dev.minicoder.llm.LlmProvider;
 import dev.minicoder.llm.ScriptedLlmProvider;
 import dev.minicoder.llm.LlmModels.ProviderResponse;
+import dev.minicoder.llm.deepseek.DeepSeekResponsesProvider;
 import dev.minicoder.llm.openai.OpenAiResponsesProvider;
 import dev.minicoder.observability.InMemoryEventSink;
 import dev.minicoder.report.RunReport;
@@ -21,34 +22,55 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
 import picocli.CommandLine.Model.CommandSpec;
 
-import java.net.URI;
 import java.net.http.HttpClient;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+import java.util.function.Function;
 
 @Command(name = "mini-coder", mixinStandardHelpOptions = true, version = "Mini Coder 0.1.0",
         description = "Run one evidence-driven coding-agent task in a trusted local Git workspace.%n"
                 + "V0.1 policy controls are not an OS sandbox; use only trusted repositories or disposable copies.",
-        footer = "%nEnvironment:%n  OPENAI_API_KEY (required for openai), OPENAI_MODEL, OPENAI_BASE_URL%n"
-                + "%nExample:%n  mini-coder --workspace . --task \"Fix the failing test\" --model gpt-5")
+        footer = "%nEnvironment:%n"
+                + "  OpenAI: OPENAI_API_KEY, OPENAI_MODEL, OPENAI_BASE_URL%n"
+                + "  DeepSeek: DEEPSEEK_API_KEY, DEEPSEEK_MODEL, DEEPSEEK_BASE_URL%n"
+                + "  API keys are read only from the selected Provider's environment variable.%n"
+                + "%nExamples:%n"
+                + "  mini-coder --workspace . --task \"Fix the failing test\" --model gpt-5%n"
+                + "  mini-coder --workspace . --task \"Fix the failing test\" --provider deepseek --model <model>")
 public final class Main implements Callable<Integer> {
+    private final Function<String, String> environment;
+
+    public Main() {
+        this(System::getenv);
+    }
+
+    Main(Map<String, String> environment) {
+        Map<String, String> snapshot = Map.copyOf(environment);
+        this.environment = snapshot::get;
+    }
+
+    private Main(Function<String, String> environment) {
+        this.environment = environment;
+    }
+
     @Spec
     private CommandSpec commandSpec;
     @Option(names = "--workspace", required = true, description = "Existing local Git workspace")
     private Path workspace;
     @Option(names = "--task", required = true, description = "Coding task")
     private String task;
-    @Option(names = "--provider", defaultValue = "openai", description = "Provider: openai or scripted")
+    @Option(names = "--provider", defaultValue = "openai", description = "Provider: openai, deepseek, or scripted")
     private String provider;
-    @Option(names = "--model", description = "Model; falls back to OPENAI_MODEL")
+    @Option(names = "--model", description = "Model; falls back to the selected Provider's model environment variable")
     private String model;
-    @Option(names = "--base-url", description = "API base URL; falls back to OPENAI_BASE_URL")
+    @Option(names = "--base-url", description = "API base URL; falls back to the selected Provider's Base URL environment variable")
     private String baseUrl;
     @Option(names = "--max-iterations", defaultValue = "30")
     private int maxIterations;
@@ -67,7 +89,15 @@ public final class Main implements Callable<Integer> {
     }
 
     static CommandLine commandLine() {
-        return new CommandLine(new Main()).setParameterExceptionHandler((error, args) -> {
+        return configured(new Main());
+    }
+
+    static CommandLine commandLine(Map<String, String> environment) {
+        return configured(new Main(environment));
+    }
+
+    private static CommandLine configured(Main command) {
+        return new CommandLine(command).setParameterExceptionHandler((error, args) -> {
             error.getCommandLine().getErr().println("CONFIG_ERROR: " + error.getMessage());
             error.getCommandLine().usage(error.getCommandLine().getErr());
             return 20;
@@ -77,24 +107,16 @@ public final class Main implements Callable<Integer> {
     @Override
     public Integer call() {
         try {
-            if (!provider.equalsIgnoreCase("openai") && !provider.equalsIgnoreCase("scripted")) {
-                throw new ConfigException("V0.1 supports openai and the offline scripted Provider");
-            }
-            boolean scripted = provider.equalsIgnoreCase("scripted");
-            String selectedModel = scripted ? firstNonBlank(model, "scripted-v0.1")
-                    : firstNonBlank(model, System.getenv("OPENAI_MODEL"));
-            String apiKey = System.getenv("OPENAI_API_KEY");
-            String selectedBaseUrl = firstNonBlank(baseUrl, System.getenv("OPENAI_BASE_URL"), "https://api.openai.com");
-            if (selectedModel == null) throw new ConfigException("Missing model: use --model or OPENAI_MODEL");
-            if (!scripted && (apiKey == null || apiKey.isBlank())) throw new ConfigException("Missing OPENAI_API_KEY");
+            ProviderConfig selected = ProviderConfig.resolve(provider, model, baseUrl, environment);
             List<String> missing = DependencyPreflight.check("git", "rg");
             if (!missing.isEmpty()) throw new ConfigException("Missing required executables: " + missing);
 
-            RunConfig config = new RunConfig(workspace, task, provider.toLowerCase(), selectedModel,
+            RunConfig config = new RunConfig(workspace, task, selected.provider(), selected.model(),
                     maxIterations, Duration.ofSeconds(maxDurationSeconds), Optional.ofNullable(verifyCommand),
                     !nonInteractive, Optional.ofNullable(jsonReport));
             Workspace opened = Workspace.open(config.workspace());
-            Redactor redactor = new Redactor(scripted ? List.of() : List.of(apiKey));
+            Redactor redactor = new Redactor(selected.provider().equals(ProviderConfig.SCRIPTED)
+                    ? List.of() : List.of(selected.apiKey()));
             ProcessRunner runner = new ProcessRunner();
             CommandPolicy policy = new CommandPolicy(opened.root());
             ApprovalService approvals = new ConsoleApprovalService(redactor, config.interactive());
@@ -105,12 +127,16 @@ public final class Main implements Callable<Integer> {
                     .register(new ApplyPatchTool())
                     .register(new ShellTool(runner, policy, approvals, redactor))
                     .register(new GitDiffTool());
-            LlmProvider llm = scripted
-                    ? new ScriptedLlmProvider(ProviderResponse.finalText("scripted-final",
-                            "Offline scripted Provider completed without changing the workspace."))
-                    : new OpenAiResponsesProvider(HttpClient.newBuilder()
-                    .connectTimeout(Duration.ofSeconds(20)).build(), URI.create(selectedBaseUrl), apiKey,
-                    selectedModel, redactor);
+            HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(20)).build();
+            LlmProvider llm = switch (selected.provider()) {
+                case ProviderConfig.SCRIPTED -> new ScriptedLlmProvider(ProviderResponse.finalText("scripted-final",
+                        "Offline scripted Provider completed without changing the workspace."));
+                case ProviderConfig.OPENAI -> new OpenAiResponsesProvider(httpClient, selected.baseUrl(),
+                        selected.apiKey(), selected.model(), redactor);
+                case ProviderConfig.DEEPSEEK -> new DeepSeekResponsesProvider(httpClient, selected.baseUrl(),
+                        selected.apiKey(), selected.model(), redactor);
+                default -> throw new ConfigException("Unsupported Provider: " + selected.provider());
+            };
             CancellationToken token = new CancellationToken();
             Runtime.getRuntime().addShutdownHook(new Thread(token::cancel, "mini-coder-cancel"));
             InMemoryEventSink events = new InMemoryEventSink();
@@ -141,8 +167,4 @@ public final class Main implements Callable<Integer> {
         return status.exitCode();
     }
 
-    private static String firstNonBlank(String... values) {
-        for (String value : values) if (value != null && !value.isBlank()) return value.strip();
-        return null;
-    }
 }

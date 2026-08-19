@@ -21,6 +21,7 @@
         <spring-boot.version>3.3.2</spring-boot.version>
         <mini.codex.e2e>false</mini.codex.e2e>
         <mini.codex.openai.smoke>false</mini.codex.openai.smoke>
+        <mini.coder.deepseek.smoke>false</mini.coder.deepseek.smoke>
     </properties>
 
     <dependencies>
@@ -80,6 +81,7 @@
                     <systemPropertyVariables>
                         <mini.codex.e2e>${mini.codex.e2e}</mini.codex.e2e>
                         <mini.codex.openai.smoke>${mini.codex.openai.smoke}</mini.codex.openai.smoke>
+                        <mini.coder.deepseek.smoke>${mini.coder.deepseek.smoke}</mini.coder.deepseek.smoke>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
@@ -132,6 +134,10 @@
         <profile>
             <id>openai-smoke</id>
             <properties><mini.codex.openai.smoke>true</mini.codex.openai.smoke></properties>
+        </profile>
+        <profile>
+            <id>deepseek-smoke</id>
+            <properties><mini.coder.deepseek.smoke>true</mini.coder.deepseek.smoke></properties>
         </profile>
     </profiles>
 </project>

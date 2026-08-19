@@ -2,7 +2,7 @@
 
 ## 1. Purpose
 
-This document consolidates implementation rules derived from the current project specifications. It is an operational guide, not an independent source of requirements. The current four-document set, including `REQ-018` and `REQ-019`, was explicitly approved by the user on 2026-08-18.
+This document consolidates implementation rules derived from the current project specifications. It is an operational guide, not an independent source of requirements. The current four-document set, including `REQ-018` through `REQ-020`, was explicitly approved by the user on 2026-08-19.
 
 Canonical specification documents:
 
@@ -15,14 +15,15 @@ If this document conflicts with a canonical spec, the canonical spec wins. Do no
 
 ## 2. Decision status
 
-The following defaults from the spec were accepted with the four-document approvals completed through 2026-08-18:
+The following defaults from the spec were accepted with the four-document approvals completed through 2026-08-19:
 
 - Java 21.
 - Maven single-module project with Maven Wrapper.
 - Picocli for CLI, Jackson for JSON, SLF4J/Logback for logging, JUnit 5 for tests.
 - OpenAI Responses API as the first real Provider; model name is runtime configuration.
 - `ScriptedLlmProvider` as the offline deterministic Provider.
-- DeepSeek is an extension point, not a V0.1 implementation requirement.
+- DeepSeek is the second real Provider, uses its own Responses Adapter and only reads `DEEPSEEK_API_KEY`; model aliases remain runtime configuration.
+- DeepSeek-specific thinking/reasoning effort CLI controls remain deferred; the Adapter uses bounded stateless replay because `previous_response_id` is unavailable.
 - Windows 11 is the primary development environment; deliberate cross-platform blockers are prohibited.
 - The target workspace must already be a Git repository.
 - V0.1 provides policy controls but not OS/container isolation.
@@ -50,7 +51,8 @@ Any still-deferred `ASM-*`, `OQ-*`, and `DD-OPEN-*` entry must remain visible. A
 ### 3.2 Explicitly out of scope
 
 - Model training, fine-tuning, or local inference engines.
-- A second real Provider in V0.1 unless the specs are revised.
+- Other real Providers beyond OpenAI and DeepSeek.
+- DeepSeek-specific thinking/reasoning effort CLI controls.
 - Multi-agent orchestration, Planner/Reviewer agents, and parallel agent execution.
 - RAG, vector databases, long-term memory, cross-process session recovery, and automatic context compaction.
 - MCP, Skills, IDE plugins, GUI, web service, and cloud execution.
@@ -174,7 +176,9 @@ Always deny recursive broad deletion, workspace escape, Git history rewriting, c
 
 ## 11. Provider rules
 
-- The real V0.1 adapter targets the OpenAI Responses API, but model and endpoint settings remain configuration.
+- The real V0.1 adapters target the OpenAI and DeepSeek Responses APIs, but model and endpoint settings remain configuration.
+- OpenAI and DeepSeek use dedicated API key, model, and Base URL environment variables; never fall back to another Provider's key.
+- DeepSeek uses a private replay cursor instead of `previous_response_id`; bound it to 30 rounds, 512 items, and 1 MiB, and do not expose reasoning contents in logs or reports.
 - Keep wire-schema mapping, function-call mapping, continuation handling, usage parsing, and Provider error classification inside the adapter.
 - Preserve `call_id`/response association across turns.
 - Retry only classified transient failures such as eligible rate limits, selected 5xx responses, and transient transport errors.

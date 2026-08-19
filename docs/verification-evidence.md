@@ -1,13 +1,13 @@
 # Mini Coder V0.1 Verification Evidence
 
-验证日期：2026-08-17 至 2026-08-18（Asia/Shanghai）
+验证日期：2026-08-17 至 2026-08-19（Asia/Shanghai）
 环境：Windows 11 amd64；Oracle JDK 21.0.11；Maven Wrapper 3.9.14；Git 2.45.1；ripgrep 15.2.0。
 
 ## Approval and traceability
 
-- 用户先明确确认原四份规格并授权按 `TASK-001`–`TASK-016` 实施；产品改名规格更新后，又明确确认 `REQ-017` 并授权 `TASK-017`；2026-08-18 再次明确确认当前四份文档、接受 `REQ-018`、`REQ-019`，授权 `TASK-018`、`TASK-019` 以及验证后提交并推送 `origin/main`。
-- 最新规格 ID 只读检查结果：`requirements.md` 包含 19 REQ/52 AC，`design.md` 映射 19 REQ，`tasks.md` 包含 19 TASK 并覆盖 19 REQ/52 AC，`check_list.md` 包含 31 CHECK 并覆盖 52 AC；ID 无重复，需求到设计/任务映射无缺失。
-- `project_rule.md`、`AGENTS.md`、README 和 CLI help 均声明：策略控制不是 OS sandbox，只能用于受信任仓库或隔离副本；DeepSeek、多 Agent、RAG、MCP、自动 Git 写入和强沙箱不在 V0.1 范围。
+- 用户先明确确认原四份规格并授权按 `TASK-001`–`TASK-016` 实施；产品改名规格更新后，又明确确认 `REQ-017` 并授权 `TASK-017`；2026-08-18 再次明确确认 `REQ-018`、`REQ-019` 并授权 `TASK-018`、`TASK-019`；2026-08-19 明确确认包含 `REQ-020` 的当前四份规格，接受 `ASM-003`、`OQ-001` 默认决策并授权 `TASK-020`、`TASK-021`。
+- 最新规格 ID 只读检查结果：`requirements.md` 包含 20 REQ/58 AC，`design.md` 映射 20 REQ，`tasks.md` 包含 21 TASK 并覆盖 20 REQ/58 AC，`check_list.md` 包含 35 CHECK 并覆盖 58 AC；ID 无重复，需求到设计/任务/检查映射无缺失。
+- `project_rule.md`、`AGENTS.md`、README 和 CLI help 均声明：策略控制不是 OS sandbox，只能用于受信任仓库或隔离副本；V0.1 支持 OpenAI、DeepSeek 和 scripted Provider，其他真实 Provider、DeepSeek 专用推理参数、多 Agent、RAG、MCP、自动 Git 写入和强沙箱仍在范围外。
 
 ## Task-level commands
 
@@ -72,19 +72,38 @@ E2E 使用真实 test-scope Spring Boot 3.3.2 fixture；临时仓库先以 `mvn.
 - 在 `target\发布 验证` 中运行 fat JAR `--help`、`--version` 均退出 0；帮助首行为 `Usage: mini-coder`，版本为 `Mini Coder 0.1.0`。
 - 同一 Unicode/空格目录使用最终制品运行 scripted CLI，进程与 JSON 均为 `SUCCEEDED_WITH_WARNINGS`/10，runId `e5c4ad60-999d-4d75-96be-23c09c736c8f`，workspace revision 为 0；该警告准确反映本次只读 scripted 任务未修改工作区。
 
+## TASK-020 and TASK-021 DeepSeek Provider evidence
+
+- 用户于 2026-08-19 明确批准包含 `REQ-020` 的当前四份规格，接受 `ASM-003`、`OQ-001` 默认决策并授权 `TASK-020`、`TASK-021`。成功验证命令均在当前 PowerShell 会话显式使用 `D:\Program Files\Java\jdk-21.0.11`；系统默认 Java 8 不作为项目验证环境。
+- 新增 `ProviderConfig` 和独立 `llm/deepseek/DeepSeekResponsesProvider`；`AgentRuntime`、`ToolRegistry`、`CompletionGate` 没有 DeepSeek wire 类型或供应商控制流分支。DeepSeek key 只读取 `DEEPSEEK_API_KEY`，模型/Base URL 按批准优先级解析。
+- 定向命令 `.\mvnw.cmd -q -Dtest='*RunConfigTest,*CliTest,*DeepSeekProviderContractTest,*RedactorTest,*LlmProviderContractTest' test` 退出 0。`DeepSeekProviderContractTest` 的 7 个测试覆盖默认/custom endpoint、Bearer、最终文本、两个有序 function call、无状态两轮回放、用量、400/401/402/403/422/429/500/503、一次有界重试、超时、畸形响应以及 30 轮/512 items/1 MiB cursor 上限。
+- 最终 `.\mvnw.cmd -q clean verify` 退出 0：25 Surefire suites、65 tests、0 failure、0 error、4 skipped。连续两次 `.\mvnw.cmd -q -Poffline-e2e verify` 均退出 0，无真实 Provider 密钥或公网依赖。
+- JDK 21 下 Unicode/空格目录中的 fat JAR `--help`、`--version` 均退出 0；帮助列出 `openai`、`deepseek`、`scripted`、DeepSeek 三个环境变量、示例和非沙箱警告。scripted CLI 退出预期 10 并生成 JSON 报告。
+- 扫描 Surefire、packaged help/error、scripted terminal/error 和 JSON 报告，两种唯一 `sk-...` 测试 token 的输出文件命中数为 0。DeepSeek 主源码中的 `previous_response_id` 和核心领域包中的 DeepSeek Adapter 类型引用均为 0。
+- 10 个 Markdown 文件只包含 1 个相对链接且目标存在；旧 DeepSeek 范围表述命中 0。fat JAR manifest 为 `dev.minicoder.cli.Main`，含 1 个 DeepSeek Adapter class、0 个 Spring class；ZIP 含 `mini-coder.jar`、README、ARCHITECTURE、CHANGELOG 和 Maven Wrapper。
+- 最终发布制品：
+  - `target/mini-coder-0.1.0-SNAPSHOT-all.jar`，SHA-256 `0FF07F82413A58C07493E8033CD5B987F6B2218375F19461371BE079B72CAD3A`。
+  - `target/mini-coder-0.1.0-SNAPSHOT-dist.zip`，SHA-256 `618E9FEB556D95DC0E9CA9B61E8578D09DCCABB96B5B84FD592B8FA5D9A743FF`。
+- `deepseek-smoke` profile/test 默认跳过。2026-08-19 用户提供 DeepSeek 凭据并明确要求立即接入后，以进程级 `DEEPSEEK_MODEL=deepseek-v4-flash` 执行 `.\mvnw.cmd -q -Pdeepseek-smoke verify`，退出 0；`DeepSeekSmokeTest` 为 1 test、0 failure、0 error、0 skipped，真实完成一次 Responses function call 与 tool result 续接。测试只使用内存 fixture，未执行真实工作区工具；全部 Surefire 报告对用户环境中 DeepSeek key 原文的文件命中数为 0。`CHECK-035` 已通过。
+- `.gitignore` 中 `.ai-code-tracker.json` 是实施开始前出现的用户改动；本任务完整保留，未将其计入 DeepSeek 实现。
+
 ## Checklist evidence map
 
 | CHECK | Evidence |
 |---|---|
-| 001–004 | 三次规格阶段批准；最新 `REQ-018`/`REQ-019` 默认决策接受；19 REQ/52 AC 追踪与安全边界审阅 |
-| 005–006 | final clean verify；packaged help/scripted CLI；CLI tests |
+| 001–004 | 四轮规格阶段批准；最新 `ASM-003`/`OQ-001`/`REQ-020` 默认决策接受；20 REQ/58 AC 追踪与安全边界审阅 |
+| 005–006 | 65-test final clean verify；三 Provider packaged help；scripted CLI/JSON；CLI/config tests |
 | 007–009 | Workspace/PathResolver/ChangeAttribution tests |
-| 010–013 | Provider contract/OpenAI adapter/AgentRuntime/CompletionGate tests |
+| 010–013 | Provider contract/OpenAI/DeepSeek adapters、错误矩阵、AgentRuntime/CompletionGate tests |
 | 014–020 | ToolRegistry、file、patch、policy、approval、process、Git tests |
-| 021–024 | revision verification matrix、RunReport/CLI、Redactor、retry/approval/truncation events |
-| 025–026 | 改名前及 `TASK-017` 后各两次 offline-e2e；真实 Spring Boot fixture 闭环 |
+| 021–024 | revision verification matrix、RunReport/CLI、OpenAI/DeepSeek Redactor、retry/approval/truncation events |
+| 025–026 | DeepSeek 变更后连续两次 offline-e2e；真实 Spring Boot fixture 闭环 |
 | 027 | N/A：本轮未使用真实 OpenAI 凭据，未获得该可选网络 smoke 的明确执行授权 |
-| 028 | final clean verify、artifact hash/content、Unicode/space path packaged CLI、文档/范围审计 |
+| 028 | 65-test final clean verify、artifact hash/content、Unicode/space path packaged CLI、三 Provider 文档/范围审计 |
 | 029 | Mini Coder CLI/版本测试、新名 JAR/ZIP/包内 JAR、旧制品为 0、旧名审计与 Unicode/space path packaged CLI |
 | 030 | 规格目录 4/4、文档/路径零残留、Markdown 相对链接 1/1、Git 历史保真审阅 |
 | 031 | `dev.minicoder` 路径/声明、Maven 坐标、shade/manifest 入口、53 tests、双 E2E、packaged CLI 与制品哈希 |
+| 032 | DeepSeek 配置优先级、key 隔离、启动前失败、packaged help 与输出秘密扫描 |
+| 033 | DeepSeek endpoint/Bearer、无状态两轮回放、顺序/用量、cursor 三类上限与协议失败 |
+| 034 | DeepSeek 错误矩阵、65 tests、双 E2E、packaged CLI、文档/链接/制品审计 |
+| 035 | 获得单独授权后的真实 DeepSeek V4 Flash Responses function call/续接，1 test、0 failure/error/skip，Surefire 中真实 key 原文命中 0 |
