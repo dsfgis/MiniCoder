@@ -2,7 +2,7 @@
 
 ## 1. Purpose
 
-This document consolidates implementation rules derived from the current project specifications. It is an operational guide, not an independent source of requirements. The current four-document set, including `REQ-018` through `REQ-020`, was explicitly approved by the user on 2026-08-19.
+This document consolidates implementation rules derived from the current project specifications. It is an operational guide, not an independent source of requirements. The current four-document set, including `REQ-018` through `REQ-021`, was explicitly approved by the user on 2026-08-19.
 
 Canonical specification documents:
 
@@ -28,6 +28,7 @@ The following defaults from the spec were accepted with the four-document approv
 - The target workspace must already be a Git repository.
 - V0.1 provides policy controls but not OS/container isolation.
 - The public product name is `Mini Coder`; the CLI and release artifact identifier is `mini-coder`; the Java namespace and Maven `groupId` are `dev.minicoder`; the canonical specification directory is `specs/mini-coder-v0.1/`.
+- Every tracked Java source under `src/main/java` and `src/test/java` has targeted Chinese type-level Javadoc and exactly one `@author Self David (dsfgis@gmail.com)` record; complex or high-risk logic receives concise Chinese intent comments instead of line-by-line narration.
 
 Any still-deferred `ASM-*`, `OQ-*`, and `DD-OPEN-*` entry must remain visible. A future implementation choice must not silently close it.
 
@@ -270,7 +271,7 @@ Do not run the smoke profile merely to make default CI pass.
 - Do not check off a `CHECK-*` item before its method has actually run and its observable result matches.
 - Evidence must name the environment, command, exit code, relevant log/report/diff/hash, and date when useful.
 - A skipped optional check must be marked `N/A` with a reason, not falsely checked as passed.
-- Before release, verify all `AC-001` through `AC-052` remain covered by tasks and checks.
+- Before release, verify all `AC-001` through `AC-062` remain covered by tasks and checks.
 
 ## 17. Change control
 

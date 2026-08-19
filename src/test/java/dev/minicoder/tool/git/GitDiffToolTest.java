@@ -13,6 +13,11 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * 验证 Git diff 的只读子命令、输出上限及预有/新增/重叠变化归属。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 class GitDiffToolTest {
     private static final ObjectMapper JSON = new ObjectMapper();
     @TempDir Path temp;

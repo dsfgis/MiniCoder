@@ -23,6 +23,11 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * 在显式授权、凭据和网络均可用时验证真实 DeepSeek function call 与结果续接。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 @EnabledIfSystemProperty(named = "mini.coder.deepseek.smoke", matches = "true")
 class DeepSeekSmokeTest {
     @Test

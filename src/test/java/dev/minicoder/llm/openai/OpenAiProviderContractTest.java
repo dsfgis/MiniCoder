@@ -30,6 +30,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * 通过本地 HTTP fixture 验证 OpenAI Responses 请求映射、续接、重试和错误脱敏。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 class OpenAiProviderContractTest {
     private static final ObjectMapper JSON = new ObjectMapper();
     private HttpServer server;

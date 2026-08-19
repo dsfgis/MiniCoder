@@ -10,6 +10,11 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+/**
+ * 验证绝对路径、父目录、符号链接和 Windows junction 逃逸均被拒绝。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 class PathResolverTest {
     @TempDir Path temp;
 

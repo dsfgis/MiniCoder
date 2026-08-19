@@ -6,6 +6,11 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.Objects;
 
+/**
+ * 通过真实路径语义阻止绝对路径、父目录、符号链接或 junction 逃逸工作区。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 public final class WorkspaceGuard {
     private final Path root;
 
@@ -23,6 +28,7 @@ public final class WorkspaceGuard {
     }
 
     public Path resolveExisting(String relativePath) {
+        // 词法检查负责拦截绝对路径和 ..，toRealPath 再识别符号链接或 junction 的真实去向。
         Path candidate = resolveLexically(relativePath);
         try {
             Path real = candidate.toRealPath();
@@ -35,6 +41,7 @@ public final class WorkspaceGuard {
 
     public Path resolveForWrite(String relativePath) {
         Path candidate = resolveLexically(relativePath);
+        // 新文件尚无 real path，因此从最近存在父目录解析真实路径，再拼回未创建的安全后缀。
         Path existing = candidate;
         while (existing != null && !Files.exists(existing, LinkOption.NOFOLLOW_LINKS)) {
             existing = existing.getParent();

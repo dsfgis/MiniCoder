@@ -15,6 +15,11 @@ import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.stream.StreamSupport;
 
+/**
+ * 在工作区边界内按稳定顺序枚举文件，并对深度、条目数和生成目录进行限制。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 public final class ListFilesTool implements Tool {
     private static final Set<String> IGNORED = Set.of(".git", "target", "build", "node_modules", ".idea", ".gradle");
     private static final int MAX_SCANNED_ENTRIES = 100_000;

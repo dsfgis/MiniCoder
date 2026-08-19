@@ -13,6 +13,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * 使用参数数组启动并监管本地进程，负责并发消费输出、超时及后代进程清理。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 public class ProcessRunner {
     public ProcessResult run(CommandSpec spec, Path workingDirectory, CancellationToken token) throws IOException {
         token.throwIfCancelled();
@@ -21,6 +26,7 @@ public class ProcessRunner {
         Instant started = Instant.now();
         BoundedCapture stdoutCapture = new BoundedCapture(spec.maxOutputBytes());
         BoundedCapture stderrCapture = new BoundedCapture(spec.maxOutputBytes());
+        // 双流必须并发消费，否则任一操作系统管道写满都可能让子进程与父进程互相等待。
         Thread stdout = Thread.startVirtualThread(() -> stdoutCapture.read(process.getInputStream()));
         Thread stderr = Thread.startVirtualThread(() -> stderrCapture.read(process.getErrorStream()));
         boolean timedOut = false;
@@ -74,6 +80,7 @@ public class ProcessRunner {
     }
 
     private static void terminateTree(Process process) {
+        // 先终止后代再终止父进程，减少父进程退出后遗留孤儿进程继续修改工作区的风险。
         process.descendants().forEach(handle -> {
             handle.destroy();
             if (handle.isAlive()) handle.destroyForcibly();

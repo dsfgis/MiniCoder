@@ -5,11 +5,17 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+/**
+ * 为测试创建并初始化隔离的临时 Git 仓库，提供可重复的提交与文件 fixture。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 public final class TemporaryGitRepository {
     private TemporaryGitRepository() {}
 
     public static Path create(Path directory) throws IOException, InterruptedException {
         Files.createDirectories(directory);
+        // 固定分支和本地测试身份，避免测试结果依赖开发者机器的全局 Git 配置。
         git(directory, "init", "-b", "main");
         git(directory, "config", "user.name", "Mini Coder Tests");
         git(directory, "config", "user.email", "tests@example.invalid");

@@ -24,6 +24,11 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * 验证 AgentRuntime 的工具顺序、状态转换、预算、取消、无进展和完成门协作行为。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 class AgentRuntimeTest {
     @TempDir Path temp;
 

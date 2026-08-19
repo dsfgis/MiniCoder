@@ -17,6 +17,11 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * 验证交互批准、拒绝和非交互默认拒绝不会绕过命令策略或泄露参数秘密。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 class ApprovalServiceTest {
     private static final ObjectMapper JSON = new ObjectMapper();
     @TempDir Path temp;

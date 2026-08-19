@@ -4,6 +4,11 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+/**
+ * 提供工具参数 JSON Schema 的构造与严格校验辅助方法。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 public final class ToolSchemas {
     private ToolSchemas() {}
 

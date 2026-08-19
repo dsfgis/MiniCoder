@@ -14,6 +14,11 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+/**
+ * 验证 ShellTool 的参数化执行、策略裁决、审批路径和统一结果映射。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 class ShellToolTest {
     private static final ObjectMapper JSON = new ObjectMapper();
     @TempDir Path temp;

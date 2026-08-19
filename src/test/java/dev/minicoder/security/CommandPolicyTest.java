@@ -8,6 +8,11 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+/**
+ * 以表驱动场景验证本地允许、外部副作用需批准和破坏性命令拒绝矩阵。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 class CommandPolicyTest {
     @TempDir Path temp;
 

@@ -1,5 +1,10 @@
 package dev.minicoder.agent;
 
+/**
+ * 定义一次 Agent 运行从成功到策略阻断、配置错误和预算耗尽等稳定终态。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 public enum RunStatus {
     INITIALIZING,
     RUNNING,

@@ -2,6 +2,11 @@ package dev.minicoder.agent;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * 在线程之间传递协作式取消信号，避免运行时继续发起新的 Provider 或工具调用。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 public final class CancellationToken {
     private final AtomicBoolean cancelled = new AtomicBoolean();
 
@@ -25,4 +30,3 @@ public final class CancellationToken {
         }
     }
 }
-

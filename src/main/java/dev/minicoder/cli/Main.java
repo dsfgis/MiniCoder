@@ -34,6 +34,11 @@ import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.function.Function;
 
+/**
+ * Mini Coder 的命令行入口，负责解析参数、装配依赖并将运行结果映射为稳定退出码。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 @Command(name = "mini-coder", mixinStandardHelpOptions = true, version = "Mini Coder 0.1.0",
         description = "Run one evidence-driven coding-agent task in a trusted local Git workspace.%n"
                 + "V0.1 policy controls are not an OS sandbox; use only trusted repositories or disposable copies.",

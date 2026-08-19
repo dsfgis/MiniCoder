@@ -9,6 +9,11 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * 验证工作区打开、Git 仓库校验、中文空格路径、CRLF 和 baseline 捕获。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 class WorkspaceTest {
     @TempDir Path temp;
 

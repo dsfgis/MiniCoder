@@ -13,6 +13,11 @@ import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+/**
+ * 编排 Provider 调用、工具执行、进度检测与完成判定的单任务 Agent 运行时。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 public final class AgentRuntime {
     public static final String SYSTEM_INSTRUCTIONS = """
             You are a local coding agent. Inspect before editing. Use only provided tools.
@@ -78,6 +83,7 @@ public final class AgentRuntime {
                 }
                 cursor = response.nextCursor();
                 pendingResults = new ArrayList<>();
+                // 在进入工具注册表前限制单轮调用数量，避免恶意或异常响应放大本地副作用。
                 if (response.toolCalls().size() > 32) {
                     throw new ProviderException(ProviderException.Category.PROTOCOL, false, 0,
                             "Provider response exceeds the 32 tool-call limit");
@@ -103,6 +109,7 @@ public final class AgentRuntime {
                         long revisionBefore = workspace.revision();
                         Optional<Tool> selectedTool = tools.find(call.name());
                         boolean mayModify = selectedTool.map(Tool::mayModifyWorkspace).orElse(false);
+                        // 工具即使未主动递增 revision，也可能通过外部进程改动文件，因此执行前保留内容快照。
                         Map<String, String> contentBefore = mayModify
                                 ? workspace.snapshotChangedContent() : Map.of();
                         ToolResult result = tools.execute(call, context);
@@ -144,6 +151,7 @@ public final class AgentRuntime {
                         }
                         emit(localEvents, RunEvent.of(runId, iteration, "tool_completed", result.status().name(),
                                 response.responseId(), call.callId(), completionMetadata));
+                        // 指纹同时包含结果内容与 workspace revision，只有等价调用且无新事实时才计为无进展。
                         String fingerprint = call.name() + "|" + call.arguments() + "|" + result.status() + "|"
                                 + result.summary() + "|" + Integer.toHexString(result.data().toString().hashCode())
                                 + "|" + workspace.revision();
@@ -162,6 +170,7 @@ public final class AgentRuntime {
                 }
 
                 if (response.finalText().isPresent()) {
+                    // 模型的最终文本只是完成提议；未解决的工具失败和验证门拥有更高事实优先级。
                     if (unresolvedToolFailures.values().stream().anyMatch(status -> status == ToolStatus.POLICY_DENIED
                             || status == ToolStatus.APPROVAL_DENIED)) {
                         return outcome(runId, RunStatus.POLICY_BLOCKED,
@@ -242,6 +251,7 @@ public final class AgentRuntime {
         }
         ByteArrayOutputStream diffBytes = new ByteArrayOutputStream(64 * 1024);
         ByteArrayOutputStream statBytes = new ByteArrayOutputStream(16 * 1024);
+        // 最终报告独立限制 diff 与 stat，防止大型仓库状态耗尽内存或 Provider 上下文。
         appendBounded(diffBytes, Workspace.git(workspace.root(), 512 * 1024,
                 "diff", "--no-ext-diff").stdout(), 512 * 1024);
         appendBounded(statBytes, Workspace.git(workspace.root(), 128 * 1024,

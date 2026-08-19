@@ -6,6 +6,11 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * 验证精确秘密、Bearer header、API key 字段和常见令牌形态均被统一遮蔽。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 class RedactorTest {
     @Test
     void redactsConfiguredAndPatternSecrets() {
@@ -17,4 +22,3 @@ class RedactorTest {
         assertTrue(output.contains("[REDACTED]"));
     }
 }
-

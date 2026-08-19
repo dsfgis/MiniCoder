@@ -14,6 +14,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * 通过参数化 ripgrep 在工作区内搜索代码，并返回有界、可定位的匹配结果。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 public final class SearchCodeTool implements Tool {
     private final ProcessRunner processRunner;
     private final ToolDefinition definition;

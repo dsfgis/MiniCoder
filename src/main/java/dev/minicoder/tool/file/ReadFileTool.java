@@ -16,6 +16,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 
+/**
+ * 受控读取 UTF-8 文本的指定行范围，并区分二进制、编码错误与输出截断。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 public final class ReadFileTool implements Tool {
     private static final int MAX_BYTES = 256 * 1024;
     private static final int MAX_FILE_BYTES = 4 * 1024 * 1024;

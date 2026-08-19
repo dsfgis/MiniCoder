@@ -18,6 +18,11 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * 表示经过规范化和 Git 校验的工作区，并集中维护 baseline 与 revision。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 public final class Workspace {
     private static final int MAX_GIT_OUTPUT_BYTES = 8 * 1024 * 1024;
     private final WorkspaceGuard guard;

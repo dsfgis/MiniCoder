@@ -7,6 +7,11 @@ import dev.minicoder.workspace.Workspace;
 import java.util.Objects;
 import java.time.Duration;
 
+/**
+ * 向工具提供受控工作区、安全服务、事件出口与当前运行关联信息。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 public record ToolExecutionContext(
         Workspace workspace,
         CancellationToken cancellationToken,

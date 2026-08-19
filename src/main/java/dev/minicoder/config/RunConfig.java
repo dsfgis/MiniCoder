@@ -5,6 +5,11 @@ import java.time.Duration;
 import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * 保存一次 CLI 运行经过校验的工作区、任务、Provider、预算与验证配置。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 public record RunConfig(
         Path workspace,
         String task,

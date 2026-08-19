@@ -11,6 +11,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 
+/**
+ * 只读汇总 Git 状态、差异和运行前基线归属，绝不执行仓库写操作。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 public final class GitDiffTool implements Tool {
     private final ToolDefinition definition;
 

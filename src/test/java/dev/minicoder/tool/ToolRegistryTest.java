@@ -15,6 +15,11 @@ import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * 验证工具注册唯一性、Schema 校验、未知调用拒绝和统一结果分派。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 class ToolRegistryTest {
     private static final ObjectMapper JSON = new ObjectMapper();
     @TempDir Path temp;

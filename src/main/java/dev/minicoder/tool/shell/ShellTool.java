@@ -13,6 +13,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * 在工作区根目录执行经策略分类和必要审批的命令，并返回统一 ToolResult。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 public final class ShellTool implements Tool {
     private final ProcessRunner runner;
     private final CommandPolicy policy;

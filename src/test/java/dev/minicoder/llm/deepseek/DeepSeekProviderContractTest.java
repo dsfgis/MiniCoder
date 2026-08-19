@@ -34,6 +34,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * 通过本地 HTTP fixture 验证 DeepSeek 无状态回放、游标上限、错误矩阵和脱敏。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 class DeepSeekProviderContractTest {
     private static final ObjectMapper JSON = new ObjectMapper();
     private static final String TEST_KEY = "sk-deepseek-test-secret-0000";

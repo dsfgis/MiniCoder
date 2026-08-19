@@ -5,8 +5,8 @@
 
 ## Approval and traceability
 
-- 用户先明确确认原四份规格并授权按 `TASK-001`–`TASK-016` 实施；产品改名规格更新后，又明确确认 `REQ-017` 并授权 `TASK-017`；2026-08-18 再次明确确认 `REQ-018`、`REQ-019` 并授权 `TASK-018`、`TASK-019`；2026-08-19 明确确认包含 `REQ-020` 的当前四份规格，接受 `ASM-003`、`OQ-001` 默认决策并授权 `TASK-020`、`TASK-021`。
-- 最新规格 ID 只读检查结果：`requirements.md` 包含 20 REQ/58 AC，`design.md` 映射 20 REQ，`tasks.md` 包含 21 TASK 并覆盖 20 REQ/58 AC，`check_list.md` 包含 35 CHECK 并覆盖 58 AC；ID 无重复，需求到设计/任务/检查映射无缺失。
+- 用户先明确确认原四份规格并授权按 `TASK-001`–`TASK-016` 实施；产品改名规格更新后，又明确确认 `REQ-017` 并授权 `TASK-017`；2026-08-18 再次明确确认 `REQ-018`、`REQ-019` 并授权 `TASK-018`、`TASK-019`；2026-08-19 明确确认包含 `REQ-020` 的当前四份规格，接受 `ASM-003`、`OQ-001` 默认决策并授权 `TASK-020`、`TASK-021`；同日再次明确确认当前四份规格，接受 `ASM-009`、`ASM-010`、`OQ-005` 和 `REQ-021` 默认决策并授权 `TASK-022`、`TASK-023`。
+- 最新规格 ID 只读检查结果：`requirements.md` 包含 21 REQ/62 AC，`design.md` 映射 21 REQ，`tasks.md` 包含 23 TASK 并覆盖 21 REQ/62 AC，`check_list.md` 包含 38 CHECK 并覆盖 62 AC；ID 无重复，需求到设计/任务/检查映射无缺失。
 - `project_rule.md`、`AGENTS.md`、README 和 CLI help 均声明：策略控制不是 OS sandbox，只能用于受信任仓库或隔离副本；V0.1 支持 OpenAI、DeepSeek 和 scripted Provider，其他真实 Provider、DeepSeek 专用推理参数、多 Agent、RAG、MCP、自动 Git 写入和强沙箱仍在范围外。
 
 ## Task-level commands
@@ -87,11 +87,23 @@ E2E 使用真实 test-scope Spring Boot 3.3.2 fixture；临时仓库先以 `mvn.
 - `deepseek-smoke` profile/test 默认跳过。2026-08-19 用户提供 DeepSeek 凭据并明确要求立即接入后，以进程级 `DEEPSEEK_MODEL=deepseek-v4-flash` 执行 `.\mvnw.cmd -q -Pdeepseek-smoke verify`，退出 0；`DeepSeekSmokeTest` 为 1 test、0 failure、0 error、0 skipped，真实完成一次 Responses function call 与 tool result 续接。测试只使用内存 fixture，未执行真实工作区工具；全部 Surefire 报告对用户环境中 DeepSeek key 原文的文件命中数为 0。`CHECK-035` 已通过。
 - `.gitignore` 中 `.ai-code-tracker.json` 是实施开始前出现的用户改动；本任务完整保留，未将其计入 DeepSeek 实现。
 
+## TASK-022 and TASK-023 Chinese source documentation evidence
+
+- 用户于 2026-08-19 明确批准包含 `REQ-021` 的当前四份规格，接受 `ASM-009`、`ASM-010`、`OQ-005` 默认决策并授权 `TASK-022`、`TASK-023`。
+- 独立源码枚举得到 `src/main/java` 48 个、`src/test/java` 28 个、合计 76 个 Java 文件。76/76 个文件的主要顶层类型前均有中文 Javadoc，且精确作者记录 `@author Self David (dsfgis@gmail.com)` 每文件恰好一条；主代码局部扫描为 48/48、零缺失、零重复、零顺序错误。
+- 新增离线 `SourceDocumentationTest`，动态扫描主/测试源码根，校验中文 Javadoc、作者格式/唯一性和注释与主要顶层声明的直接关联。Java 21 下 `\.\mvnw.cmd -q -Dtest=SourceDocumentationTest test` 退出 0，`\.\mvnw.cmd -q -DskipTests compile` 退出 0。
+- 重点审阅 AgentRuntime/CompletionGate、OpenAI/DeepSeek Adapter、WorkspaceGuard、ApplyPatch、ProcessRunner、CommandPolicy、Redactor 及复杂测试 fixture，共有 25 处中文意图注释，用于说明边界、原因或不变量。扫描全部 Java 源码与 Surefire 报告，用户 DeepSeek key 原文命中文件数为 0；作者邮箱仅以批准的作者元数据出现。
+- 75 个既有受版本控制 Java 文件相对 HEAD 去除块注释、行注释与空行后，非注释差异文件数为 0；新增 Java 文件仅为文档覆盖测试。依赖、构建配置、公开契约和产品执行逻辑均未改变，实施前已有的 `.gitignore` 用户改动保持原样。
+- Oracle JDK 21.0.11 下最终 `\.\mvnw.cmd -q clean verify` 退出 0：26 个 Surefire suite、66 tests、0 failure、0 error、2 skipped；连续两次 `\.\mvnw.cmd -q -Poffline-e2e verify` 均退出 0。`git diff --check` 退出 0。
+- 本次注释实施后的发布制品：
+  - `target/mini-coder-0.1.0-SNAPSHOT-all.jar`，SHA-256 `4C8589998106339DB30953274011F69B62B77DE55DF94FFF3B147404914266E0`。
+  - `target/mini-coder-0.1.0-SNAPSHOT-dist.zip`，SHA-256 `DC77E9E992F6F89446A61467BF826534AB613CCAB1DD707988ADA05B94417A20`。
+
 ## Checklist evidence map
 
 | CHECK | Evidence |
 |---|---|
-| 001–004 | 四轮规格阶段批准；最新 `ASM-003`/`OQ-001`/`REQ-020` 默认决策接受；20 REQ/58 AC 追踪与安全边界审阅 |
+| 001–004 | 五轮规格阶段批准；最新 `ASM-009`/`ASM-010`/`OQ-005`/`REQ-021` 默认决策接受；21 REQ/62 AC 追踪与安全边界审阅 |
 | 005–006 | 65-test final clean verify；三 Provider packaged help；scripted CLI/JSON；CLI/config tests |
 | 007–009 | Workspace/PathResolver/ChangeAttribution tests |
 | 010–013 | Provider contract/OpenAI/DeepSeek adapters、错误矩阵、AgentRuntime/CompletionGate tests |
@@ -107,3 +119,4 @@ E2E 使用真实 test-scope Spring Boot 3.3.2 fixture；临时仓库先以 `mvn.
 | 033 | DeepSeek endpoint/Bearer、无状态两轮回放、顺序/用量、cursor 三类上限与协议失败 |
 | 034 | DeepSeek 错误矩阵、65 tests、双 E2E、packaged CLI、文档/链接/制品审计 |
 | 035 | 获得单独授权后的真实 DeepSeek V4 Flash Responses function call/续接，1 test、0 failure/error/skip，Surefire 中真实 key 原文命中 0 |
+| 036–038 | 76/76 Java 中文 Javadoc 与唯一作者记录；25 处意图注释；SourceDocumentationTest、66-test clean verify、双 offline-e2e、非注释差异与秘密扫描 |

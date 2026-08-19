@@ -10,6 +10,11 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * 验证进程双流捕获、非零退出、输出截断、超时和父子进程树清理。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 class ProcessRunnerTest {
     @TempDir Path temp;
 
@@ -26,6 +31,7 @@ class ProcessRunnerTest {
 
     @Test
     void timesOutAndCleansProcess() throws Exception {
+        // 子 PowerShell 继续休眠可证明超时处理清理的是整棵进程树，而不只是直接父进程。
         ProcessResult result = new ProcessRunner().run(new CommandSpec("powershell",
                 List.of("-NoProfile", "-Command",
                         "$child = Start-Process powershell -WindowStyle Hidden -PassThru -ArgumentList '-NoProfile','-Command','Start-Sleep -Seconds 10'; "

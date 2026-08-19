@@ -10,6 +10,11 @@ import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
 
+/**
+ * 按预置脚本确定性返回响应，用于无网络、无真实凭据的 Agent 测试和离线演示。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 public final class ScriptedLlmProvider implements LlmProvider {
     private final Deque<Object> script = new ArrayDeque<>();
     private final List<ProviderRequest> requests = new ArrayList<>();

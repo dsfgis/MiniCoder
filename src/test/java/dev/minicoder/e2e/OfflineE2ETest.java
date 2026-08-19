@@ -27,6 +27,11 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * 使用临时 Spring Boot 仓库和脚本化 Provider 验证完整、无网络的缺陷修复闭环。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 @EnabledIfSystemProperty(named = "mini.codex.e2e", matches = "true")
 class OfflineE2ETest {
     private static final ObjectMapper JSON = new ObjectMapper();

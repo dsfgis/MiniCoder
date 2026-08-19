@@ -10,6 +10,11 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+/**
+ * 验证 Git baseline 能区分用户预有、Agent 新增修改及重叠变化。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 class ChangeAttributionTest {
     @TempDir Path temp;
 

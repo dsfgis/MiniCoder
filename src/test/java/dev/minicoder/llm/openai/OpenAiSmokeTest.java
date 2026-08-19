@@ -17,6 +17,11 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * 在显式授权、凭据和网络均可用时验证真实 OpenAI 工具调用续接。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 @EnabledIfSystemProperty(named = "mini.codex.openai.smoke", matches = "true")
 class OpenAiSmokeTest {
     @Test

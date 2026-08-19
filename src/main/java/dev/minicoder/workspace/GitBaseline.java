@@ -4,6 +4,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+/**
+ * 保存运行开始前的 HEAD、状态、差异和文件摘要，作为后续变更归属基线。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 public record GitBaseline(
         String head,
         String porcelainStatus,
@@ -20,4 +25,3 @@ public record GitBaseline(
         contentHashes = Map.copyOf(Objects.requireNonNullElse(contentHashes, Map.of()));
     }
 }
-

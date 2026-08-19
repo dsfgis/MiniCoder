@@ -3,6 +3,11 @@ package dev.minicoder.security;
 import java.io.Console;
 import java.util.List;
 
+/**
+ * 通过终端提示读取交互式批准，并在非交互模式下保持默认拒绝。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 public final class ConsoleApprovalService implements ApprovalService {
     private final Redactor redactor;
     private final boolean interactive;
@@ -22,4 +27,3 @@ public final class ConsoleApprovalService implements ApprovalService {
         return answer != null && (answer.equalsIgnoreCase("y") || answer.equalsIgnoreCase("yes"));
     }
 }
-

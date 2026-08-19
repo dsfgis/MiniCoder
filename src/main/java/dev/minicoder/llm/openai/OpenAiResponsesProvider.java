@@ -25,6 +25,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 
+/**
+ * 将领域请求映射到 OpenAI Responses API，并封装工具调用续接、重试和错误脱敏。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 public final class OpenAiResponsesProvider implements LlmProvider {
     private static final ObjectMapper JSON = new ObjectMapper();
     private static final int MAX_RESPONSE_BYTES = 4 * 1024 * 1024;
@@ -106,9 +111,10 @@ public final class OpenAiResponsesProvider implements LlmProvider {
             tool.put("name", definition.name());
             tool.put("description", definition.description());
             tool.set("parameters", definition.parametersSchema());
-            // Core schemas allow omitted optional fields; local ToolRegistry remains the enforcement boundary.
+            // 核心 Schema 允许省略可选字段；真正的严格参数校验仍由本地 ToolRegistry 统一执行。
             tool.put("strict", false);
         });
+        // OpenAI 由服务端 response id 续接，因此无需像 DeepSeek 一样在本地回放完整响应项。
         if (!request.cursor().responseId().isBlank()) {
             root.put("previous_response_id", request.cursor().responseId());
         }
@@ -221,6 +227,7 @@ public final class OpenAiResponsesProvider implements LlmProvider {
     private static void backoff(int attempts, long retryAfterMillis, Instant deadline,
                                 ProviderTelemetry telemetry, String category,
                                 CancellationToken token) throws ProviderException {
+        // 退避时间同时受 Retry-After 上限和总 deadline 约束，重试不能延长整次运行预算。
         long exponential = Math.min(2_000, 100L * (1L << Math.min(attempts - 1, 4)))
                 + ThreadLocalRandom.current().nextLong(25, 100);
         long millis = Math.max(exponential, Math.min(retryAfterMillis, 10_000));

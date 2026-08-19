@@ -14,14 +14,14 @@
   - **关联任务**：实施前门禁。
   - **验证方法**：人工逐项审阅，并记录每个待确认假设/开放问题的“接受、修改或延期”决定。
   - **预期结果**：不存在被悄然当成事实的假设；所有会影响 V0.1 实现的默认选择都有明确决定。
-  - **证据**：用户于 2026-08-19 明确确认当前四份规格文档，接受 `ASM-003`、`OQ-001` 和 `REQ-020` 默认决策，并授权按 `TASK-020`、`TASK-021` 实施。
+  - **证据**：2026-08-19 用户明确确认当前四份规格文档，接受 `ASM-009`、`ASM-010`、`OQ-005` 和 `REQ-021` 默认决策，并授权按 `TASK-022`、`TASK-023` 实施；`FACT-010` 作为仓库源码统计事实已通过独立枚举复核。
 
 - [x] `CHECK-002` **需求可测试性与逐级追踪完整**
-  - **引用**：`REQ-001`–`REQ-020`；`AC-001`–`AC-058`；`design.md` 17；`tasks.md` 4。
+  - **引用**：`REQ-001`–`REQ-021`；`AC-001`–`AC-062`；`design.md` 17；`tasks.md` 4。
   - **关联任务**：文档一致性检查。
   - **验证方法**：运行规格 ID 校验脚本/人工交叉表，确认每个 REQ 有 AC，每个 REQ 有设计映射，每个 REQ/AC 至少映射到一个 TASK 和一个 CHECK。
   - **预期结果**：无缺失 ID、重复 ID、孤立设计、孤立任务或孤立验收标准。
-  - **证据**：本次规格一致性检查为 20 REQ、58 AC、21 TASK、35 CHECK；ID 无重复，20 个需求均有设计和任务映射，展开 ID 区间后 `AC-001`–`AC-058` 均有任务与检查项覆盖。
+  - **证据**：2026-08-19 重新执行规格 ID、区间展开和逐级追踪检查：21 REQ、62 AC、23 TASK、38 CHECK；四类 ID 均连续且无重复；所有 REQ 均有设计和任务映射，`AC-001`–`AC-062` 均有任务与检查项覆盖。
 
 - [x] `CHECK-003` **V0.1 安全边界与风险接受已确认**
   - **引用**：`REQ-008`、`REQ-010`、`REQ-013`；`AC-022`、`AC-025`–`AC-027`、`AC-034`；`design.md` 8、15.4。
@@ -35,7 +35,7 @@
   - **关联任务**：`TASK-001` 的前置条件。
   - **验证方法**：用户明确确认四份当前文档，而不是只确认其中一份或原始想法。
   - **预期结果**：存在清晰、可追溯的整体批准；批准后才能修改产品代码、测试、依赖或配置。
-  - **证据**：用户于 2026-08-19 明确批准包含 `REQ-020`、`TASK-020`、`TASK-021` 和 `CHECK-032`–`CHECK-035` 的当前四份规格文档，规格门禁已解除。
+  - **证据**：2026-08-19 用户明确使用“我确认当前四份规格文档”整体批准包含 `REQ-021`、`TASK-022`、`TASK-023` 和 `CHECK-036`–`CHECK-038` 的当前版本，并授权实施。
 
 ## 3. 构建、CLI 与配置
 
@@ -266,6 +266,27 @@
   - **预期结果**：至少完成一次真实 DeepSeek Responses function call 与 tool result 续接；无密钥泄露；账户余额、权限、模型或网络阻塞与产品失败分开记录。
   - **证据**：2026-08-19 用户提供 DeepSeek 凭据并明确要求立即接入，构成本次真实公网 smoke 授权。JDK 21 下以进程级 `DEEPSEEK_MODEL=deepseek-v4-flash` 执行 `.\mvnw.cmd -q -Pdeepseek-smoke verify` 退出 0；`DeepSeekSmokeTest` 为 1 test、0 failure、0 error、0 skipped，完成一次真实 Responses function call 和 tool result 续接。测试仅使用内存 fixture，未执行真实工作区工具；扫描全部 Surefire 报告，用户环境中的 DeepSeek key 原文命中文件数为 0。
 
+- [x] `CHECK-036` **全部 Java 文件的中文 Javadoc 与作者记录覆盖完整**
+  - **引用**：`REQ-021`；`AC-059`、`AC-061`；`design.md` 13.4。
+  - **关联任务**：`TASK-022`、`TASK-023`。
+  - **验证方法**：运行 `SourceDocumentationTest` 并用独立只读 PowerShell/`rg` 复核 `src/main/java`、`src/test/java` 下全部受版本控制 Java 文件；逐文件验证主要顶层类型前存在含中文字符的 Javadoc，且精确作者记录 `@author Self David (dsfgis@gmail.com)` 出现一次。
+  - **预期结果**：主代码、测试代码和新增覆盖测试自身均 100% 通过；无缺失、重复、拼写差异或写在非 Javadoc 注释中的作者记录。
+  - **证据**：独立枚举得到主代码 48 个、测试代码 28 个、合计 76 个 Java 文件；76/76 均在主要顶层类型前具有中文 Javadoc，精确作者记录均恰好出现一次。Java 21 下 `\.\mvnw.cmd -q -Dtest=SourceDocumentationTest test` 退出 0，动态覆盖测试自身也在扫描范围内。
+
+- [x] `CHECK-037` **中文注释具有维护价值且不泄露秘密**
+  - **引用**：`REQ-013`、`REQ-021`；`AC-033`、`AC-060`、`AC-061`；`design.md` 11、13.4、15.6。
+  - **关联任务**：`TASK-022`、`TASK-023`。
+  - **验证方法**：人工审阅全部类型级 Javadoc，并重点审阅 AgentRuntime/CompletionGate、Provider Adapter、Workspace/PathResolver、ApplyPatch、ProcessRunner、CommandPolicy、Redactor 和复杂测试 fixture；扫描常见 API key/Bearer 模式。
+  - **预期结果**：注释针对具体职责、边界、原因或不变量；不逐行复述代码、不作未经验证的行为承诺、不包含密钥或凭据；作者邮箱只以批准的作者元数据形式出现。
+  - **证据**：人工审阅全部类型级 Javadoc，并重点复核 AgentRuntime/CompletionGate、Provider Adapter、WorkspaceGuard、ApplyPatch、ProcessRunner、CommandPolicy、Redactor 及复杂测试 fixture；共识别 25 处中文意图注释，说明边界、原因或不变量而非逐行复述。扫描全部 Java 源码和 Surefire 报告，用户 DeepSeek key 原文命中文件数为 0；批准的作者邮箱仅作为作者元数据出现。
+
+- [x] `CHECK-038` **注释变更不改变行为且离线回归通过**
+  - **引用**：`REQ-015`、`REQ-016`、`REQ-021`；`AC-037`–`AC-041`、`AC-062`；`design.md` 12–14。
+  - **关联任务**：`TASK-022`、`TASK-023`。
+  - **验证方法**：在 Java 21 环境执行 `SourceDocumentationTest`、`.\mvnw.cmd -q clean verify` 和连续两次 `.\mvnw.cmd -q -Poffline-e2e verify`；审阅 `git diff --word-diff`/普通 diff，确认除注释、规格/证据和源码覆盖测试外无行为变化。
+  - **预期结果**：全部命令退出 0；测试数不少于修改前 65；不访问真实 Provider 或公网；产品 Java 可执行语句、公开契约、依赖和构建配置保持不变；用户已有 `.gitignore` 修改被保留。
+  - **证据**：Oracle JDK 21.0.11 下 `\.\mvnw.cmd -q clean verify` 退出 0，26 个 Surefire suite 共 66 tests、0 failure、0 error、2 skipped；连续两次 `\.\mvnw.cmd -q -Poffline-e2e verify` 均退出 0。75 个既有受版本控制 Java 文件去除注释与空行后相对 HEAD 的非注释差异为 0；新增文件仅为 `SourceDocumentationTest`。依赖、构建配置和公开契约未改，用户已有 `.gitignore` 修改保持原样。
+
 ## 9. 验收标准到检查项覆盖表
 
 | 验收标准 | 检查项 |
@@ -306,5 +327,8 @@
 | `AC-056` | `CHECK-012`、`CHECK-034` |
 | `AC-057` | `CHECK-005`、`CHECK-028`、`CHECK-034`、`CHECK-035` |
 | `AC-058` | `CHECK-006`、`CHECK-028`、`CHECK-034` |
+| `AC-059` | `CHECK-036` |
+| `AC-060`–`AC-061` | `CHECK-036`、`CHECK-037` |
+| `AC-062` | `CHECK-038` |
 
-当前覆盖结论：`AC-001` 至 `AC-058` 均映射到至少一个检查项；DeepSeek Provider 的配置、合同、错误、脱敏、离线回归、真实 smoke 和发布检查均已由当前证据闭合。仅 `CHECK-027` 可选 OpenAI smoke 未授权执行并保持 N/A，不阻塞离线发布。
+当前覆盖结论：`AC-001` 至 `AC-062` 均映射到至少一个检查项。`CHECK-001`–`CHECK-026`、`CHECK-028`–`CHECK-038` 均有实际证据并已闭环；仅 `CHECK-027` 可选 OpenAI smoke 保持 N/A，不阻塞离线发布。

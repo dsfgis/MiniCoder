@@ -16,6 +16,7 @@ OpenAI Provider 采用 Responses API，是因为官方文档当前将其作为�
 - `DG-004`：所有副作用都经过统一边界和策略入口。（`REQ-002`、`REQ-007`、`REQ-008`、`REQ-010`、`REQ-013`）
 - `DG-005`：核心行为可用 Fake Provider 与临时 Git 仓库离线复现。（`REQ-014`、`REQ-015`）
 - `DG-006`：DeepSeek 密钥、线协议和无状态续接封装在 Adapter/Config 边界内，不改变 AgentRuntime、ToolRegistry 或 CompletionGate。（`REQ-016`、`REQ-020`）
+- `DG-007`：用中文 Javadoc 和少量意图注释解释类型职责与关键不变量，在不改变行为的前提下降低后续维护成本。（`REQ-021`）
 
 ### 2.2 非目标
 
@@ -351,6 +352,7 @@ RUNNING/* → CANCELLED | POLICY_BLOCKED | CONFIG_ERROR | PROVIDER_ERROR
 - Windows 路径、`..`、符号链接/junction 边界。
 - CommandPolicy 的 allow/approve/deny 表驱动样例。
 - Redactor 对配置秘密和常见令牌格式的覆盖。
+- 源码注释覆盖检查：枚举主代码与测试代码的 Java 文件，验证主要顶层类型具有中文 Javadoc 和唯一的统一作者记录。
 
 ### 12.2 集成测试
 
@@ -370,6 +372,7 @@ RUNNING/* → CANCELLED | POLICY_BLOCKED | CONFIG_ERROR | PROVIDER_ERROR
 - V0.1 串行执行工具，以确定性换取吞吐；未来只有在无副作用且无决策依赖时才考虑并行。（`REQ-004`）
 - 所有外部命令使用参数数组；Windows 的空格、Unicode、CRLF 和进程树行为纳入 CI/本机验收。（`REQ-016`）
 - Provider、模型、Base URL、超时和重试配置化；不在领域层传播 OpenAI/DeepSeek SDK 或 JSON wire 类型。（`REQ-003`、`REQ-016`、`REQ-020`）
+- 中文注释使用 UTF-8，只描述稳定职责、边界、原因和不变量；避免逐行翻译实现，以降低注释与代码漂移风险。（`REQ-021`）
 
 ### 13.1 产品命名与兼容边界
 
@@ -399,9 +402,25 @@ CLI 单元测试断言 command name、版本文本和示例；打包验证断言
 
 迁移局部验证先执行编译和全部单元/集成测试；文档迁移完成后再执行最终 `clean verify`、两次离线 E2E、manifest/CLI 验收和受版本控制树零命中扫描。任何编译失败、测试数下降、旧路径残留或扫描命中都阻止完成状态。（`REQ-019`、`AC-051`、`AC-052`）
 
+### 13.4 中文注释与作者元数据
+
+注释采用“文件主要顶层类型强制覆盖、复杂逻辑按价值补充”的两层策略。`src/main/java` 与 `src/test/java` 下每个受版本控制 Java 文件的主要顶层 `class`、`interface`、`record` 或 `enum` 前增加中文 Javadoc；统一模板如下，职责文本必须针对具体类型编写，不允许批量复制同一句空泛描述。（`REQ-021`、`AC-059`、`AC-061`）
+
+```java
+/**
+ * 用中文说明该类型的职责、使用边界或测试目标。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
+```
+
+复杂逻辑注释优先覆盖 Agent 循环/完成门、Provider 请求映射与续接、路径边界、补丁原子性、进程树清理、命令策略和脱敏等位置。注释解释“为什么需要此约束”或“必须保持什么不变量”，不翻译变量名和单行语句；简单 record、enum、异常和测试类通常只需要准确的类型级 Javadoc。作者邮箱是用户明确要求的公开源码元数据，不视为运行时秘密，但不得把 API key、凭据或环境变量值写入任何注释。（`REQ-013`、`REQ-021`、`AC-060`）
+
+增加一个离线源码结构测试，动态枚举两个源码根而非硬编码文件数量，检查每个文件的主要顶层声明之前存在中文 Javadoc，并精确匹配一条 `@author Self David (dsfgis@gmail.com)`。人工审阅负责判断注释是否有意义，自动测试只负责可客观判定的覆盖、格式和唯一性。该测试本身也遵循同一注释规则。（`REQ-015`、`REQ-021`、`AC-059`–`AC-062`）
+
 ## 14. 迁移、发布与回滚
 
-这是新建项目，无既有数据迁移。V0.1 发布物为可执行 JAR/分发包、README、安全边界和示例配置。产品、代码和文档改名通过一次 Java namespace 迁移、干净构建及文档目录迁移切换到 `mini-coder` 标识；废弃 package、制品和文档目录不作为兼容产物继续发布。DeepSeek 通过新增 Adapter、配置分支和测试 profile 发布，不改变现有 OpenAI/scripted 行为；回滚 DeepSeek 时整体移除其 CLI 值、配置、Adapter、profile 和文档，不把 DeepSeek 密钥回退给 OpenAI。（`REQ-017`–`REQ-020`）
+这是新建项目，无既有数据迁移。V0.1 发布物为可执行 JAR/分发包、README、安全边界和示例配置。产品、代码和文档改名通过一次 Java namespace 迁移、干净构建及文档目录迁移切换到 `mini-coder` 标识；废弃 package、制品和文档目录不作为兼容产物继续发布。DeepSeek 通过新增 Adapter、配置分支和测试 profile 发布，不改变现有 OpenAI/scripted 行为；回滚 DeepSeek 时整体移除其 CLI 值、配置、Adapter、profile 和文档，不把 DeepSeek 密钥回退给 OpenAI。中文注释迁移只修改 Java 注释和新增源码覆盖测试，不改变运行时接口或发布格式；需要回滚时按普通 Git 提交整体回退，不保留半覆盖状态。（`REQ-017`–`REQ-021`）
 
 实现回滚通过普通 Git 提交回退完成；运行期间不得自动 reset 用户工作区。若 Agent 产出的更改需要撤销，由用户审阅 diff 后使用其选择的版本控制流程处理，工具不代替用户执行破坏性恢复。（`REQ-009`、`REQ-013`）
 
@@ -437,6 +456,12 @@ CLI 单元测试断言 command name、版本文本和示例；打包验证断言
 - 缺点：学习/实现成本更高，行为与用户日常 Git 可能有差异。
 - 决策：V0.1 使用受控只读 Git CLI；后续再评估 JGit。（`REQ-009`）
 
+### 15.6 为每个字段和方法添加中文注释
+
+- 优点：表面覆盖率最高，初学者能在更多位置看到中文说明。
+- 缺点：大量注释只会复述类型和语法，增加视觉噪声，重构后更容易与真实行为不一致。
+- 决策：主要顶层类型 100% 覆盖；字段/方法/代码块仅在职责、边界、原因或不变量不直观时补充。（`REQ-021`）
+
 ## 16. 未解决设计决定
 
 - `DD-OPEN-001`：Maven 与 Gradle 的最终选择，当前按 `ASM-001` 采用 Maven。
@@ -468,6 +493,7 @@ CLI 单元测试断言 command name、版本文本和示例；打包验证断言
 | `REQ-018` | 13.1、13.2、14 |
 | `REQ-019` | 3.2、6、12、13.1、13.3、14 |
 | `REQ-020` | 1、3–6、10–15 |
+| `REQ-021` | 2、12.1、13、13.4、14、15.6 |
 
 ## 18. 参考资料
 

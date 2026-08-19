@@ -14,6 +14,11 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * 验证目录枚举的稳定排序、生成目录忽略、深度/条目限制和工作区边界。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 class ListFilesToolTest {
     private static final ObjectMapper JSON = new ObjectMapper();
     @TempDir Path temp;

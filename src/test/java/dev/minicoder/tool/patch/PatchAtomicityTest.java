@@ -13,6 +13,11 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * 通过故障注入验证多文件补丁提交失败时回滚全部已移动目标。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 class PatchAtomicityTest {
     private static final ObjectMapper JSON = new ObjectMapper();
     @TempDir Path temp;
@@ -59,6 +64,7 @@ class PatchAtomicityTest {
                 -second
                 +second changed
                 """;
+        // 在第一个文件已替换后注入第二次提交失败，专门验证逆序恢复路径。
         ApplyPatchTool tool = new ApplyPatchTool((target, committed) -> {
             if (committed == 1) throw new java.io.IOException("injected second-file commit failure");
         });

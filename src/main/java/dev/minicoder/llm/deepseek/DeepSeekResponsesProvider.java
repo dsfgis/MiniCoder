@@ -33,6 +33,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 
+/**
+ * 适配 DeepSeek Responses API，并以私有有界回放游标维持无状态工具调用续接。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 public final class DeepSeekResponsesProvider implements LlmProvider {
     private static final ObjectMapper JSON = new ObjectMapper();
     private static final int MAX_RESPONSE_BYTES = 4 * 1024 * 1024;
@@ -127,6 +132,7 @@ public final class DeepSeekResponsesProvider implements LlmProvider {
             tool.put("strict", false);
         });
 
+        // DeepSeek 不接受 previous_response_id，后续轮次必须回放受支持的 output items 与工具结果。
         if (request.cursor().isEmpty()) {
             if (!request.newToolResults().isEmpty()) {
                 throw protocol("DeepSeek tool results require a replay cursor", null);
@@ -157,6 +163,7 @@ public final class DeepSeekResponsesProvider implements LlmProvider {
 
             List<ToolCall> calls = new ArrayList<>();
             StringBuilder text = new StringBuilder();
+            // 私有 cursor 只保存续接所需的受支持项，并在序列化前同时限制轮数、项数和字节数。
             ArrayNode replay = requestReplay(requestInput);
             for (JsonNode item : output) {
                 String type = item.path("type").asText();

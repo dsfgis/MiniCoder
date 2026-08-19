@@ -10,7 +10,7 @@ V0.1 的目标是：用户通过 CLI 指定一个本地 Git 工作区和一项�
 
 ### 2.1 已确认事实
 
-- `FACT-001`：当前 `D:\study\code\agentcode` 已是实现完成并推送到 `origin/main` 的 Git 仓库，现有离线基线为 53 个测试。
+- `FACT-001`：当前 `D:\study\code\agentcode` 已是实现完成并推送到 `origin/main` 的 Git 仓库；DeepSeek 接入后的最新已验证离线基线为 65 个测试。
 - `FACT-002`：目标是先实现 Coding Agent Harness，而不是训练专用模型。
 - `FACT-003`：V0.1 采用 Java 21，提供 CLI、LLM Provider 抽象、Agent Loop 和本地工具。
 - `FACT-004`：V0.1 的核心工具范围为 `list_files`、`read_file`、`search_code`、`apply_patch`、`shell`、`git_diff`。
@@ -19,6 +19,7 @@ V0.1 的目标是：用户通过 CLI 指定一个本地 Git 工作区和一项�
 - `FACT-007`：用户随后要求所有涉及产品名称的文档统一采用 `Mini Coder`，不再保留旧产品名或旧规格目录 slug。
 - `FACT-008`：用户进一步要求代码中的相关命名也统一为 `Mini Coder`，因此此前拟保留内部 Java package 的默认方案不再适用。
 - `FACT-009`：用户于 2026-08-18 要求增加 DeepSeek API key 支持；这会把 DeepSeek 提升为第二个真实 Provider，属于已批准规格范围之外的实质变更，必须先重新批准四份规格。
+- `FACT-010`：用户于 2026-08-19 要求为代码增加中文注释，并将作者记录为 `Self David`、作者邮箱记录为 `dsfgis@gmail.com`。当前仓库共有 75 个 Java 文件（主代码 48、测试 27），没有文件包含 `@author`，仅 1 个文件检测到中文注释。
 
 ### 2.2 待确认假设
 
@@ -30,6 +31,8 @@ V0.1 的目标是：用户通过 CLI 指定一个本地 Git 工作区和一项�
 - `ASM-006`：测试验收使用一个受控的 Spring Boot 示例仓库，同时核心文件工具保持语言无关。
 - `ASM-007`：V0.1 提供工作区边界、命令策略、审批、超时和输出限制，但不宣称能够安全执行恶意代码；强隔离的 OS/容器沙箱留到后续版本。
 - `ASM-008`：一次 CLI 运行只处理一个用户任务，不恢复跨进程会话。
+- `ASM-009`：本次“代码”默认指全部受版本控制的 `src/main/java/**/*.java` 与 `src/test/java/**/*.java`，不包含 `target/`、生成代码、依赖源码或非 Java 文件。
+- `ASM-010`：每个 Java 文件的主要顶层类型使用中文 Javadoc 说明职责，并统一写入 `@author Self David (dsfgis@gmail.com)`；只在复杂控制流、安全边界或不直观算法处补充中文意图注释，不要求逐行或为显而易见的 getter/构造器添加注释。
 
 ### 2.3 开放问题（不阻塞文档草案）
 
@@ -37,6 +40,7 @@ V0.1 的目标是：用户通过 CLI 指定一个本地 Git 工作区和一项�
 - `OQ-002`：默认构建工具是否改用 Gradle？默认答案：否，采用 Maven Wrapper。
 - `OQ-003`：高风险命令是“始终拒绝”还是“交互审批后允许”？默认答案：破坏性命令始终拒绝；可恢复但有外部副作用的命令需要审批。
 - `OQ-004`：首版是否需要真正的 OS 级沙箱？默认答案：否，但发布说明必须明确安全边界。
+- `OQ-005`：是否要求每个字段和方法都有中文注释？默认答案：否；强制覆盖每个 Java 文件的主要顶层类型，并对复杂/高风险逻辑补充注释，以避免机械注释掩盖真正的重要约束。
 
 ## 3. 功能需求
 
@@ -200,6 +204,15 @@ V0.1 的目标是：用户通过 CLI 指定一个本地 Git 工作区和一项�
 - `AC-057` Given 未设置任何真实 Provider 密钥且无公网，When 执行默认测试、DeepSeek 合约测试和离线 E2E，Then 全部可确定性运行；真实 DeepSeek smoke 只在显式 profile、凭据、模型和用户网络授权同时存在时运行，否则默认跳过且不阻塞离线发布。
 - `AC-058` Given README、CLI `--help`、示例配置和发布包，When 用户查找 Provider 配置，Then 文档准确列出 `openai`、`deepseek`、`scripted`，分别说明密钥/模型/Base URL 环境变量、优先级、安全边界和至少一个不含真实密钥的 DeepSeek 示例。
 
+### REQ-021 Java 中文注释与作者信息
+
+系统的全部受版本控制 Java 主代码和测试代码必须具有可维护的中文源码说明。每个 Java 文件的主要顶层类型必须以中文 Javadoc 准确描述其职责、关键边界或测试目标，并统一记录作者 `Self David` 与作者邮箱 `dsfgis@gmail.com`。注释不得改变运行行为、公开契约、测试语义或构建产物，也不得用逐行翻译代码的机械注释替代设计意图。
+
+- `AC-059` Given `src/main/java` 与 `src/test/java` 下的全部受版本控制 `.java` 文件，When 执行源码注释覆盖检查，Then 每个文件的主要顶层 `class`、`interface`、`record` 或 `enum` 前均存在至少一句含中文字符的 Javadoc，且包含且仅包含一条 `@author Self David (dsfgis@gmail.com)` 作者记录。
+- `AC-060` Given Agent Loop、Provider Adapter、Workspace/PathResolver、ApplyPatch、ProcessRunner、CommandPolicy、Redactor、CompletionGate 等复杂或高风险实现，When 人工审阅注释，Then 注释说明职责、约束、原因或不变量，不复述单行语法，不包含过时承诺、密钥或未经验证的行为声明。
+- `AC-061` Given 测试源码，When 审阅类级 Javadoc 与关键测试辅助逻辑，Then 中文说明能够识别该测试类覆盖的合同、边界或故障场景，同时保留现有测试名称、断言和执行语义。
+- `AC-062` Given 注释与作者信息修改后的最终 revision，When 使用 Java 21 执行源码覆盖检查、`clean verify` 和连续两次离线 E2E，Then 全部退出 0，测试数不少于修改前 65，Git diff 除注释、规格/证据及注释覆盖测试外不包含产品行为变更，并且真实 Provider smoke 不被默认触发。
+
 ## 5. 范围
 
 ### 5.1 V0.1 范围内
@@ -215,6 +228,7 @@ V0.1 的目标是：用户通过 CLI 指定一个本地 Git 工作区和一项�
 - 全部当前文档及规格目录的 `Mini Coder` 命名迁移与链接校验。
 - Java 主代码/测试代码、Maven 坐标和可执行入口的 `dev.minicoder` 命名空间迁移。
 - DeepSeek Provider 的 `DEEPSEEK_API_KEY`、`DEEPSEEK_MODEL`、`DEEPSEEK_BASE_URL` 配置、无状态 Responses API 续接适配、离线合约测试和可选真实 smoke profile。
+- 全部 Java 主代码与测试代码的中文顶层 Javadoc、复杂逻辑意图注释，以及统一的作者/邮箱记录。
 
 ### 5.2 V0.1 范围外
 
@@ -226,6 +240,7 @@ V0.1 的目标是：用户通过 CLI 指定一个本地 Git 工作区和一项�
 - Git commit/branch/worktree/push/PR 自动化。
 - 完整 OS/容器沙箱、网络命名空间或恶意代码隔离承诺。
 - 自动安装 Java、Git、ripgrep、Maven 或目标项目依赖。
+- 对每个字段、简单方法或单行语句进行机械逐行注释；修改非 Java 源码的署名格式；为生成文件或第三方源码补注释。
 
 ## 6. 约束与依赖
 
@@ -236,6 +251,7 @@ V0.1 的目标是：用户通过 CLI 指定一个本地 Git 工作区和一项�
 - V0.1 运行目标应是受信任或一次性测试仓库；命令策略不能替代 OS 级隔离。
 - 多文件补丁的事务语义仅覆盖可测试的正常进程内失败；崩溃一致性和断电恢复不在 V0.1 范围内。
 - 用户原有未提交修改必须保留；系统不得通过 reset/clean/checkout 等手段恢复工作区。
+- 作者邮箱将随源码公开进入 Git 历史；该公开范围来自用户的明确要求。Java 源码和新增验证代码继续使用 UTF-8，不引入额外 Javadoc/格式化依赖。
 
 ## 7. 用户故事
 
@@ -248,6 +264,7 @@ V0.1 的目标是：用户通过 CLI 指定一个本地 Git 工作区和一项�
 - `US-007`：作为文档读者，我想让所有当前文档和规格路径都使用 `Mini Coder` 命名，以便导航、搜索和引用结果一致。
 - `US-008`：作为 Java 维护者，我想让源码、测试、Maven 坐标和入口类统一使用 `dev.minicoder`，以便代码搜索与发布坐标不再混用旧命名。
 - `US-009`：作为 DeepSeek API 用户，我想通过 `DEEPSEEK_API_KEY` 和 `--provider deepseek` 运行同一套 Coding Agent Loop，以便在不改动工具、安全策略和完成门的情况下选择第二个真实模型供应商。
+- `US-010`：作为 Java 维护者，我想从中文源码注释中快速理解每个类型的职责与关键约束，并能看到统一作者联系方式，以便后续审阅和维护。
 
 ## 8. 验收总则
 

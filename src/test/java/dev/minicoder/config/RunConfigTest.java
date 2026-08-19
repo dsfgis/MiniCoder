@@ -9,6 +9,11 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * 验证运行配置与 Provider 专用环境变量的优先级、必填项和跨供应商隔离。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 class RunConfigTest {
     private static final String DEEPSEEK_TEST_KEY = "sk-deepseek-test-secret-0000";
     private static final String OPENAI_TEST_KEY = "sk-openai-test-secret-0000";

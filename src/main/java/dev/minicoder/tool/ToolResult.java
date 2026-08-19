@@ -7,6 +7,11 @@ import java.time.Duration;
 import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * 以统一结构返回工具状态、摘要、数据、截断事实、错误与耗时。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 public record ToolResult(
         ToolStatus status,
         String summary,
@@ -43,4 +48,3 @@ public record ToolResult(
         }
     }
 }
-

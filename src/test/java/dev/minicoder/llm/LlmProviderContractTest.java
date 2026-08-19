@@ -12,6 +12,11 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * 验证 Provider 无关领域模型对文本、工具调用、游标和用量的共同契约。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 class LlmProviderContractTest {
     private static final ObjectMapper JSON = new ObjectMapper();
 
@@ -45,4 +50,3 @@ class LlmProviderContractTest {
         assertEquals(1, provider.remainingSteps());
     }
 }
-

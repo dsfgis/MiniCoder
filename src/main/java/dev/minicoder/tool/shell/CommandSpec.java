@@ -4,6 +4,11 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * 描述待执行程序、参数、工作目录、超时、输出上限和显式 Shell 模式。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 public record CommandSpec(
         String executable,
         List<String> arguments,
@@ -22,4 +27,3 @@ public record CommandSpec(
         shellMode = shellMode == null ? ShellMode.NONE : shellMode;
     }
 }
-

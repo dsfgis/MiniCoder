@@ -10,6 +10,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * 集中定义 Provider 无关的请求、响应、工具调用、游标和用量领域模型。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 public final class LlmModels {
     private LlmModels() {}
 

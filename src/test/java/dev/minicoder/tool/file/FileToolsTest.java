@@ -16,6 +16,11 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * 验证文本读取与代码搜索的正常、无匹配、编码、二进制和越界场景。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 class FileToolsTest {
     private static final ObjectMapper JSON = new ObjectMapper();
     @TempDir Path temp;

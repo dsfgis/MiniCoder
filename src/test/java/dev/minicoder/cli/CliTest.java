@@ -14,6 +14,11 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * 验证 CLI 帮助、配置失败、Provider 选择、退出码和秘密隔离等公开契约。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 class CliTest {
     private static final String DEEPSEEK_TEST_KEY = "sk-deepseek-test-secret-0000";
     private static final String OPENAI_TEST_KEY = "sk-openai-test-secret-0000";

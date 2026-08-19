@@ -6,6 +6,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+/**
+ * 根据结构化命令及参数将执行请求分类为允许、需批准或始终拒绝。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 public final class CommandPolicy {
     private static final Set<String> DENIED_EXECUTABLES = Set.of(
             "rm", "rmdir", "del", "erase", "format", "diskpart", "shutdown", "reboot",
@@ -26,6 +31,7 @@ public final class CommandPolicy {
         List<String> args = arguments == null ? List.of() : arguments;
         String joined = String.join(" ", args).toLowerCase(Locale.ROOT);
 
+        // 先拒绝工作区外的绝对可执行文件，再进入命令名称白名单，避免路径伪装绕过分类。
         try {
             Path executablePath = Path.of(executable);
             if (executablePath.isAbsolute()
@@ -66,6 +72,7 @@ public final class CommandPolicy {
         if (isKnownLocalBuild(name, args) || isReadOnlyExecutable(name)) {
             return Decision.allow("Known local read or verification command");
         }
+        // 无法可靠识别的命令默认要求批准，而不是乐观放行未知副作用。
         return Decision.approval("Command is not in the V0.1 automatic allow set");
     }
 

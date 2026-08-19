@@ -20,6 +20,11 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * 对 unified diff 进行全量预检，并在可控失败时以回滚保持多文件修改一致性。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 public final class ApplyPatchTool implements Tool {
     private static final Pattern HUNK = Pattern.compile("@@ -(\\d+)(?:,(\\d+))? \\+(\\d+)(?:,(\\d+))? @@.*");
     private static final int MAX_PATCH_BYTES = 2 * 1024 * 1024;
@@ -97,6 +102,7 @@ public final class ApplyPatchTool implements Tool {
                 after.put(target, updatedBytes);
                 affected.add(context.workspace().guard().relativize(target));
             }
+            // 所有路径、上下文和新内容均已在内存预检完成后，才进入文件系统提交阶段。
             commit(after, before, faultInjector);
             long revision = context.workspace().recordChanges(affected);
             var data = JsonNodeFactory.instance.objectNode();
@@ -204,6 +210,7 @@ public final class ApplyPatchTool implements Tool {
         Map<Path, Path> staged = new LinkedHashMap<>();
         List<Path> committed = new ArrayList<>();
         try {
+            // 临时文件与目标位于同一文件系统，优先使用原子替换；任何移动失败都逆序回滚已提交目标。
             for (Map.Entry<Path, byte[]> entry : after.entrySet()) {
                 Path parent = entry.getKey().getParent();
                 Files.createDirectories(parent);

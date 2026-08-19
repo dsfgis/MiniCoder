@@ -5,6 +5,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
+/**
+ * 在异常、日志、工具结果和报告边界统一遮蔽已配置秘密及常见令牌格式。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 public final class Redactor {
     private static final String MASK = "[REDACTED]";
     private static final List<Pattern> TOKEN_PATTERNS = List.of(
@@ -29,6 +34,7 @@ public final class Redactor {
             return Objects.requireNonNullElse(input, "");
         }
         String result = input;
+        // 先替换配置中已知的完整秘密，再用通用模式兜底遮蔽未知 Bearer/API key 形态。
         for (String secret : secrets) {
             result = result.replace(secret, MASK);
         }

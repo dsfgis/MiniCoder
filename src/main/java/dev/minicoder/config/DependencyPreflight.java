@@ -6,6 +6,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * 在 Agent 启动前检查 Git、ripgrep 等外部依赖是否可用，避免运行到中途才失败。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 public final class DependencyPreflight {
     private DependencyPreflight() {}
 

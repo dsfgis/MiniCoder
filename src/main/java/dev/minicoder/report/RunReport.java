@@ -12,6 +12,11 @@ import dev.minicoder.security.Redactor;
 import java.util.Objects;
 import java.util.List;
 
+/**
+ * 从同一份运行事实生成终端与 JSON 报告，保证状态、证据和用量表达一致。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 public final class RunReport {
     private static final ObjectMapper JSON = new ObjectMapper();
     private final RunOutcome outcome;

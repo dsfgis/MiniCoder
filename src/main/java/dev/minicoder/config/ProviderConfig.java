@@ -6,6 +6,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
+/**
+ * 按 Provider 隔离解析 API key、模型与 Base URL，禁止跨供应商回退凭据。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 public final class ProviderConfig {
     public static final String OPENAI = "openai";
     public static final String DEEPSEEK = "deepseek";

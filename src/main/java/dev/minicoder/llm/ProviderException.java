@@ -1,5 +1,10 @@
 package dev.minicoder.llm;
 
+/**
+ * 携带 Provider 错误类别、是否可重试及已脱敏消息的结构化异常。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 public final class ProviderException extends Exception {
     public enum Category {
         AUTHENTICATION,

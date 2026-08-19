@@ -8,6 +8,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * 汇总一次 Agent 运行的终态、说明、工具结果、验证证据和用量信息。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 public record RunOutcome(
         String runId,
         RunStatus status,

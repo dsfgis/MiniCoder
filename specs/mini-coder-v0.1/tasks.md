@@ -224,6 +224,28 @@
 - **预期结果**：默认构建、双 E2E 和 packaged CLI 退出符合预期且测试数不少于实施前 53；不需要真实密钥或公网；help/README 准确列出三个 Provider 和隔离的配置优先级；可选 smoke 不泄密并能完成至少一次 DeepSeek Responses function call 续接，或以外部环境阻塞准确记录。
 - **并行性**：否；依赖 Adapter 完成并作为发布收口。
 
+### TASK-022 为 Java 主代码增加中文注释与作者信息
+
+- **状态**：已完成；48/48 个主代码 Java 文件覆盖中文类型 Javadoc 和唯一作者记录，Java 21 编译退出 0，既有 Java 文件去除注释与空行后的非注释差异为 0，详见 `CHECK-036`–`CHECK-038` 与 `docs/verification-evidence.md`。
+- **交付物**：为 `src/main/java/**/*.java` 每个文件的主要顶层类型增加针对性的中文 Javadoc，并统一写入且仅写入一条 `@author Self David (dsfgis@gmail.com)`；在 AgentRuntime/CompletionGate、OpenAI/DeepSeek Adapter、Workspace/PathResolver、ApplyPatch、ProcessRunner、CommandPolicy、Redactor 等复杂或高风险逻辑处补充解释原因和不变量的中文注释。
+- **需求引用**：`REQ-013`、`REQ-015`、`REQ-016`、`REQ-021`；`AC-033`、`AC-037`、`AC-039`、`AC-059`、`AC-060`、`AC-062`。
+- **设计引用**：12.1、13、13.4、14、15.6。
+- **依赖**：`TASK-021`；包含 `REQ-021`、`ASM-009`、`ASM-010`、`OQ-005` 的四份当前规格文档重新获批。
+- **验证方法**：用只读 PowerShell/`rg` 枚举 `src/main/java` 全部 Java 文件，逐文件检查中文 Javadoc、作者记录唯一性和主要顶层声明顺序；执行 `.\mvnw.cmd -q -DskipTests compile`；人工审阅复杂逻辑注释和 `git diff`。
+- **预期结果**：全部主代码 Java 文件覆盖通过；注释使用 UTF-8、内容针对具体职责且无秘密；编译退出 0；diff 不包含可执行语句、公开接口或构建配置变化。
+- **并行性**：否；大量文件共享统一格式，先完成主代码并审阅后再处理测试代码。
+
+### TASK-023 为 Java 测试代码增加中文注释并完成回归门禁
+
+- **状态**：已完成；28/28 个测试 Java 文件（含新增覆盖测试）覆盖中文类型 Javadoc 和唯一作者记录，`SourceDocumentationTest`、最终 clean verify 与连续两次离线 E2E 均退出 0，详见 `CHECK-036`–`CHECK-038` 与 `docs/verification-evidence.md`。
+- **交付物**：为 `src/test/java/**/*.java` 每个文件的主要顶层类型增加测试目标/边界的中文 Javadoc和统一作者记录；为不直观的 fixture、临时 Git、协议模拟和故障注入逻辑补充中文意图注释；新增离线 `SourceDocumentationTest`，动态验证主代码与测试代码的中文 Javadoc、作者格式和唯一性；更新验证证据与检查状态。
+- **需求引用**：`REQ-015`、`REQ-016`、`REQ-021`；`AC-037`、`AC-038`、`AC-041`、`AC-059`–`AC-062`。
+- **设计引用**：12、13、13.4、14。
+- **依赖**：`TASK-022`。
+- **验证方法**：在 Java 21 环境执行 `.\mvnw.cmd -q -Dtest=SourceDocumentationTest test`、`.\mvnw.cmd -q clean verify` 和连续两次 `.\mvnw.cmd -q -Poffline-e2e verify`；统计 Java 文件、中文 Javadoc 和精确作者记录覆盖；审阅最终 diff，确认真实 Provider smoke 未默认触发，且用户已有 `.gitignore` 改动保持未改。
+- **预期结果**：源码覆盖测试、clean verify 和两次 E2E 均退出 0；全部 Java 文件覆盖且每文件作者记录恰好一条；测试数不少于修改前 65；除注释、规格/证据和源码覆盖测试外不存在行为变化；无网络/API key 依赖。
+- **并行性**：否；作为本次注释与作者信息变更的最终发布门禁。
+
 ## 3. 推荐增量里程碑
 
 | 里程碑 | 包含任务 | 可演示结果 |
@@ -236,6 +258,7 @@
 | M6 代码命名迁移 | `TASK-018` | Java namespace、Maven 坐标与入口类统一为 `dev.minicoder` |
 | M7 文档与发布收口 | `TASK-019` | 全部文档统一命名、规格目录/链接迁移、最终离线门禁通过 |
 | M8 DeepSeek Provider | `TASK-020`–`TASK-021` | DeepSeek 密钥/模型配置、Responses API 工具调用、离线合约和可选真实 smoke |
+| M9 中文源码说明 | `TASK-022`–`TASK-023` | 全部 Java 主/测试代码具有中文职责说明、统一作者信息和离线覆盖门禁 |
 
 ## 4. 需求与验收标准覆盖检查
 
@@ -261,5 +284,6 @@
 | `REQ-018` | `AC-046`–`AC-048` | `TASK-019` |
 | `REQ-019` | `AC-049`–`AC-052` | `TASK-018`、`TASK-019` |
 | `REQ-020` | `AC-053`–`AC-058` | `TASK-020`、`TASK-021` |
+| `REQ-021` | `AC-059`–`AC-062` | `TASK-022`、`TASK-023` |
 
-覆盖结论：当前 20 个需求和 58 个验收标准均至少映射到一个实施任务；DeepSeek 只扩展 Provider/配置/测试/文档边界，没有任务引入 V0.1 范围外的多 Agent、RAG、MCP、长期记忆、Git 写入、其他真实 Provider 或强沙箱承诺。
+覆盖结论：当前 21 个需求和 62 个验收标准均至少映射到一个实施任务；中文源码说明任务只修改 Java 注释、增加离线源码覆盖测试并更新证据，不改变产品行为，也没有引入 V0.1 范围外的多 Agent、RAG、MCP、长期记忆、Git 写入、其他真实 Provider 或强沙箱承诺。

@@ -12,6 +12,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * 维护不可变工具集合，统一完成名称查找、参数校验和执行分派。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 public final class ToolRegistry {
     private final Map<String, Tool> tools = new LinkedHashMap<>();
 

@@ -10,6 +10,11 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+/**
+ * 验证完成门只接受最终 workspace revision 上相关且成功的验证证据。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 class CompletionGateTest {
     private final CompletionGate gate = new CompletionGate();
 

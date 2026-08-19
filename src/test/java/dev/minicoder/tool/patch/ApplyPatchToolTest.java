@@ -13,6 +13,11 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * 验证 unified diff 的成功应用、冲突、非法路径和 workspace revision 更新。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 class ApplyPatchToolTest {
     private static final ObjectMapper JSON = new ObjectMapper();
     @TempDir Path temp;
@@ -49,4 +54,3 @@ class ApplyPatchToolTest {
         assertFalse(Files.exists(temp.resolve("escape.txt")));
     }
 }
-

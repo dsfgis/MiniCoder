@@ -17,6 +17,11 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * 验证终端和 JSON 报告共享同一运行事实并保持稳定字段与秘密脱敏。
+ *
+ * @author Self David (dsfgis@gmail.com)
+ */
 class RunReportTest {
     private static final ObjectMapper JSON = new ObjectMapper();
 
